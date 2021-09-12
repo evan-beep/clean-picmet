@@ -43,7 +43,7 @@ export default function RegisterScreen({ navigation }: { navigation: any }) {
 
 
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
-  const [bday, setBday] = useState(null);
+  const [bday, setBday] = useState('');
 
   const [darkMode, setDarkMode] = useState(false);
 
@@ -150,7 +150,7 @@ export default function RegisterScreen({ navigation }: { navigation: any }) {
       .then(function (result) {
         firebase.database().ref("user_list").push({
           email: e,
-          bday: bday,
+          bday: bday.toString(),
           displayname: u,
         });
         result.user.updateProfile({
