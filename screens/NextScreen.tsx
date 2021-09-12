@@ -69,12 +69,29 @@ const COMMENTS = [
 var itemList: any = []
 
 
+
 function HotMain({ navigation }: { navigation: any }) {
 
   useEffect(getItem, []);
 
   const [currImage, setCurrImage] = useState('');
   const [currItem, setCurrItem] = React.useState(null);
+
+  function detectBday() {
+    if (currUser) {
+      let user_list = firebase.database().ref('user_list');
+      user_list.once('value').then(function (snapshot) {
+        snapshot.forEach(function (childSnapshot) {
+          var childData = childSnapshot.val();
+          if (childData.email == currUser.email) {
+            if (!childData.bday) {
+              setHasBirthday(false);
+            }
+          }
+        })
+      })
+    }
+  }
 
   const showModal = (item: any) => {
     setCurrItem(item.item)
@@ -97,6 +114,7 @@ function HotMain({ navigation }: { navigation: any }) {
   useEffect(() => {
     if (firebaseUser) {
       setCurrUser(firebaseUser);
+      detectBday();
     }
   }, []);
 
@@ -641,205 +659,220 @@ function HotMain({ navigation }: { navigation: any }) {
   }
 
   function updateDNameBDay() {
-    setHasBirthday(true);
+    let user_list = firebase.database().ref('user_list');
+    user_list.once('value').then(function (snapshot) {
+      snapshot.forEach(function (childSnapshot) {
+        var childData = childSnapshot.val();
+        if (childData.email == currUser.email) {
+          if (!childData.bday) {
+            let user_data = firebase.database().ref('user_list/' + childSnapshot.key);
+            user_data.set({
+              bday: bday.toString()
+            })
+          }
+        }
+      })
+    })
   }
+  setHasBirthday(true);
+}
 
-  const GetBdayModal = () => {
-    return (
+const GetBdayModal = () => {
+  return (
 
-      <View style={styles.container}>
-        <View style={styles.topContainer}>
+    <View style={styles.container}>
+      <View style={styles.topContainer}>
 
+      </View>
+      <View style={{ width: '100%', height: '100%', justifyContent: 'flex-start', alignItems: 'center' }}>
+        <View style={{ width: '100%', height: 100, alignItems: 'center' }}>
+          <Text style={{ color: 'white', fontSize: 25, width: '60%', lineHeight: 30 }}>
+            {
+              `在開始之前麻煩您選擇顯示名稱並提供您的生日`
+            }
+
+          </Text>
         </View>
-        <View style={{ width: '100%', height: '100%', justifyContent: 'flex-start', alignItems: 'center' }}>
-          <View style={{ width: '100%', height: 100, alignItems: 'center' }}>
-            <Text style={{ color: 'white', fontSize: 25, width: '60%', lineHeight: 30 }}>
-              {
-                `在開始之前麻煩您選擇顯示名稱並提供您的生日`
-              }
+        <View style={[styles.textInputBG, styles.midCol]}>
+          <TextInput
+            style={styles.input}
+            onChangeText={setDisplayName}
+            value={displayName}
+            placeholder="使用者名稱"
+            blurOnSubmit={false}
+          />
+        </View>
+        <TouchableOpacity
+          onPress={showDatePicker}
+          style={[styles.midCol, styles.textInputBG, {
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            backgroundColor: '#7CAEDE'
+          }]}>
+          <Text style={{
+            fontSize: 20,
+            color: 'white',
+            fontWeight: '700'
+          }}>
+            選擇生日{bday ? '：' + bday.toISOString().substring(0, 10) : ''}
+          </Text>
+        </TouchableOpacity>
+        <DateTimePickerModal
+          isVisible={isDatePickerVisible}
+          mode="date"
+          isDarkModeEnabled={darkMode}
+          onConfirm={handleConfirm}
+          onCancel={hideDatePicker}
+        />
 
-            </Text>
-          </View>
-          <View style={[styles.textInputBG, styles.midCol]}>
-            <TextInput
-              style={styles.input}
-              onChangeText={setDisplayName}
-              value={displayName}
-              placeholder="使用者名稱"
-              blurOnSubmit={false}
-            />
-          </View>
+
+        <View style={{ width: '100%', justifyContent: 'center', alignItems: 'center' }}>
           <TouchableOpacity
-            onPress={showDatePicker}
+            onPress={() => { updateDNameBDay() }}
             style={[styles.midCol, styles.textInputBG, {
               display: 'flex',
               justifyContent: 'center',
               alignItems: 'center',
-              backgroundColor: '#7CAEDE'
+              backgroundColor: '#71D0DA'
             }]}>
             <Text style={{
               fontSize: 20,
               color: 'white',
               fontWeight: '700'
             }}>
-              選擇生日{bday ? '：' + bday.toISOString().substring(0, 10) : ''}
+              完成
             </Text>
           </TouchableOpacity>
-          <DateTimePickerModal
-            isVisible={isDatePickerVisible}
-            mode="date"
-            isDarkModeEnabled={darkMode}
-            onConfirm={handleConfirm}
-            onCancel={hideDatePicker}
+        </View>
+        <View style={[styles.midCol, {
+          height: 80,
+          width: '100%',
+          display: 'flex',
+          flexDirection: 'row',
+          justifyContent: 'space-around',
+          alignItems: 'center'
+        }]}>
+        </View>
+      </View>
+    </View>)
+}
+
+
+return (
+  <Provider>
+    <View style={{ backgroundColor: '#71D0DA', flex: 1, alignItems: 'center', justifyContent: 'flex-start' }}>
+      <View style={styles.topBlock}>
+        <TouchableOpacity
+          onPress={() => { navigation.openDrawer() }}
+          style={styles.topButton}>
+          <Image
+            style={[{
+              height: 40,
+              width: 40,
+              resizeMode: 'contain',
+              opacity: 1
+            }]}
+            source={require('../assets/openmenu.png')}
           />
+        </TouchableOpacity>
+        <View style={styles.textInputBG}>
+          <TextInput
+            style={styles.input}
+            onChangeText={setSearchQuery}
+            value={searchQuery}
+            placeholder="搜尋"
+          />
+        </View>
+        <TouchableOpacity
+          onPress={() => { }}
+          style={styles.topButton}>
+          <Image
+            style={[{
+              height: 40,
+              width: 40,
+              resizeMode: 'contain',
+              opacity: 1
+            }]}
+            source={require('../assets/search.png')}
+          />
+        </TouchableOpacity>
+      </View>
 
-
-          <View style={{ width: '100%', justifyContent: 'center', alignItems: 'center' }}>
-            <TouchableOpacity
-              onPress={() => { updateDNameBDay() }}
-              style={[styles.midCol, styles.textInputBG, {
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                backgroundColor: '#71D0DA'
-              }]}>
-              <Text style={{
-                fontSize: 20,
-                color: 'white',
-                fontWeight: '700'
-              }}>
-                完成
-              </Text>
-            </TouchableOpacity>
-          </View>
-          <View style={[styles.midCol, {
-            height: 80,
-            width: '100%',
+      <View style={styles.commentList}>
+        <FlatList
+          data={hotMainItems}
+          keyExtractor={item => item.id.toString()}
+          ListHeaderComponent={mainHeader}
+          ListHeaderComponentStyle={{ width: '90%', height: 60, alignItems: 'flex-start', justifyContent: 'center' }}
+          columnWrapperStyle={styles.row}
+          renderItem={renderItem}
+          horizontal={false}
+          numColumns={2}
+          contentContainerStyle={{
             display: 'flex',
-            flexDirection: 'row',
-            justifyContent: 'space-around',
-            alignItems: 'center'
-          }]}>
-          </View>
-        </View>
-      </View>)
-  }
+            justifyContent: 'center',
+            alignItems: 'center',
+            paddingBottom: 120
+          }}
+        />
+      </View>
 
-
-  return (
-    <Provider>
-      <View style={{ backgroundColor: '#71D0DA', flex: 1, alignItems: 'center', justifyContent: 'flex-start' }}>
-        <View style={styles.topBlock}>
-          <TouchableOpacity
-            onPress={() => { navigation.openDrawer() }}
-            style={styles.topButton}>
-            <Image
-              style={[{
-                height: 40,
-                width: 40,
-                resizeMode: 'contain',
-                opacity: 1
-              }]}
-              source={require('../assets/openmenu.png')}
-            />
-          </TouchableOpacity>
-          <View style={styles.textInputBG}>
-            <TextInput
-              style={styles.input}
-              onChangeText={setSearchQuery}
-              value={searchQuery}
-              placeholder="搜尋"
-            />
-          </View>
-          <TouchableOpacity
-            onPress={() => { }}
-            style={styles.topButton}>
-            <Image
-              style={[{
-                height: 40,
-                width: 40,
-                resizeMode: 'contain',
-                opacity: 1
-              }]}
-              source={require('../assets/search.png')}
-            />
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.commentList}>
-          <FlatList
-            data={hotMainItems}
-            keyExtractor={item => item.id.toString()}
-            ListHeaderComponent={mainHeader}
-            ListHeaderComponentStyle={{ width: '90%', height: 60, alignItems: 'flex-start', justifyContent: 'center' }}
-            columnWrapperStyle={styles.row}
-            renderItem={renderItem}
-            horizontal={false}
-            numColumns={2}
-            contentContainerStyle={{
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-              paddingBottom: 120
-            }}
-          />
-        </View>
-
-        <Portal>
-          <Modal style={{ marginTop: 0, marginBottom: 0 }} visible={visible} onDismiss={hideModal}>
-            <KeyboardAvoidingView
-              behavior={(Platform.OS === 'ios') ? "padding" : undefined} style={{ backgroundColor: '#DE75BE' }}>
-              <View style={{ height: '100%', width: '100%', backgroundColor: '#DE75BE', alignItems: 'center', justifyContent: 'flex-start' }}>
-                <View style={[styles.topContainer,]}>
-                  <TouchableOpacity style={styles.backButton} onPress={hideModal}>
-                    <Image
-                      style={[styles.backButton, { resizeMode: 'contain' }]}
-                      source={require('../assets/backarrow.png')} />
-                  </TouchableOpacity>
-                </View>
-                <View style={styles.flatList}>
-                  <FlatList
-                    data={itemComments}
-                    keyExtractor={item => item.comment_id.toString()}
-                    renderItem={CommentContainer}
-                    ListHeaderComponent={ListHeader}
-                    horizontal={false}
-                    contentContainerStyle={{
-                      paddingBottom: 200
-                    }}
+      <Portal>
+        <Modal style={{ marginTop: 0, marginBottom: 0 }} visible={visible} onDismiss={hideModal}>
+          <KeyboardAvoidingView
+            behavior={(Platform.OS === 'ios') ? "padding" : undefined} style={{ backgroundColor: '#DE75BE' }}>
+            <View style={{ height: '100%', width: '100%', backgroundColor: '#DE75BE', alignItems: 'center', justifyContent: 'flex-start' }}>
+              <View style={[styles.topContainer,]}>
+                <TouchableOpacity style={styles.backButton} onPress={hideModal}>
+                  <Image
+                    style={[styles.backButton, { resizeMode: 'contain' }]}
+                    source={require('../assets/backarrow.png')} />
+                </TouchableOpacity>
+              </View>
+              <View style={styles.flatList}>
+                <FlatList
+                  data={itemComments}
+                  keyExtractor={item => item.comment_id.toString()}
+                  renderItem={CommentContainer}
+                  ListHeaderComponent={ListHeader}
+                  horizontal={false}
+                  contentContainerStyle={{
+                    paddingBottom: 200
+                  }}
+                />
+              </View>
+              <View style={{ position: 'absolute', bottom: 0, height: 100, width: '100%', backgroundColor: '#7CAEDE', display: 'flex', flexDirection: 'row' }}>
+                <View style={{ width: '80%', height: 40, backgroundColor: 'white', borderRadius: 10, display: 'flex', justifyContent: 'center', margin: 10, marginTop: 20 }}>
+                  <TextInput
+                    value={myComment}
+                    onChangeText={setMyComment}
+                    style={{ marginLeft: 10, width: '95%', height: '90%', fontSize: 20, fontWeight: '500' }}
+                    placeholder="我想說⋯⋯"
                   />
                 </View>
-                <View style={{ position: 'absolute', bottom: 0, height: 100, width: '100%', backgroundColor: '#7CAEDE', display: 'flex', flexDirection: 'row' }}>
-                  <View style={{ width: '80%', height: 40, backgroundColor: 'white', borderRadius: 10, display: 'flex', justifyContent: 'center', margin: 10, marginTop: 20 }}>
-                    <TextInput
-                      value={myComment}
-                      onChangeText={setMyComment}
-                      style={{ marginLeft: 10, width: '95%', height: '90%', fontSize: 20, fontWeight: '500' }}
-                      placeholder="我想說⋯⋯"
-                    />
-                  </View>
-                  <TouchableOpacity
-                    onPress={sendMyComment}
-                    style={{ width: 40, height: 40, marginTop: 20 }}>
-                    <Image
-                      style={{ width: 40, height: 40, resizeMode: 'contain' }}
-                      source={require('../assets/send.png')} />
+                <TouchableOpacity
+                  onPress={sendMyComment}
+                  style={{ width: 40, height: 40, marginTop: 20 }}>
+                  <Image
+                    style={{ width: 40, height: 40, resizeMode: 'contain' }}
+                    source={require('../assets/send.png')} />
 
-                  </TouchableOpacity>
-                </View>
+                </TouchableOpacity>
               </View>
-            </KeyboardAvoidingView>
-          </Modal>
-        </Portal>
+            </View>
+          </KeyboardAvoidingView>
+        </Modal>
+      </Portal>
 
-        <Portal>
-          <Modal style={{ marginTop: 0, marginBottom: 0 }} visible={!hasBirthday}>
-            {GetBdayModal()}
-          </Modal>
-        </Portal>
-      </View>
-    </Provider>
-  )
+      <Portal>
+        <Modal style={{ marginTop: 0, marginBottom: 0 }} visible={!hasBirthday}>
+          {GetBdayModal()}
+        </Modal>
+      </Portal>
+    </View>
+  </Provider>
+)
 }
 
 

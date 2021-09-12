@@ -11,6 +11,9 @@ import "firebase/database";
 //import "firebase/functions";
 import "firebase/storage";
 import { Alert } from 'react-native';
+import * as Google from 'expo-google-app-auth';
+
+
 
 // Initialize Firebase
 var firebaseConfig = {
@@ -57,6 +60,65 @@ export default function RegisterScreen({ navigation }: { navigation: any }) {
     setBday(date);
     hideDatePicker();
   };
+
+  // const signInWithGoogle = () => 
+  // GoogleAuthentication.logInAsync({
+  //     androidStandaloneAppClientId: '1040692554774-3st90o5ub67brhatr2fktml82bqrdm8c.apps.googleusercontent.com',
+  //     iosStandaloneAppClientId: '1040692554774-3st90o5ub67brhatr2fktml82bqrdm8c.apps.googleusercontent.com',
+  //     scopes: ['profile', 'email']
+  // })
+  //     .then((logInResult) => {
+  //         if (logInResult.type === 'success') {
+  //             const { idToken, accessToken } = logInResult;
+  //             const credential = firebase.auth.GoogleAuthProvider.credential(
+  //                 idToken,
+  //                 accessToken
+  //             );
+
+  //             return firebase.auth().signInWithCredential(credential);
+  //             // Successful sign in is handled by firebase.auth().onAuthStateChanged
+  //         }
+  //         return Promise.reject(); // Or handle user cancelation separatedly
+  //     })
+  //     .catch((error) => {
+  //         // ...
+  //     });
+
+  async function signInWithGoogleAsync() {
+    try {
+      const result = await Google.logInAsync({
+        behavior: "web",
+        iosClientId: "1040692554774-6clkoa9ftvif006pgcgchpihb81fsm6i.apps.googleusercontent.com",
+        scopes: ['profile', 'email'],
+      })
+
+      if (result.type === 'success') {
+        let user_list = firebase.database().ref('user_list');
+        var already_exist = false;
+        user_list.once('value').then(function (snapshot) {
+          snapshot.forEach(function (childSnapshot) {
+            var childData = childSnapshot.val();
+            if (childData.email == result.user.email) {
+              alert("此帳號已存在")
+              already_exist = true;
+            }
+          })
+        })
+        if (already_exist === false) {
+          firebase.database().ref("user_list").push({
+            email: result.user.email,
+            displayname: result.user.name,
+          })
+
+        }
+        return result.accessToken;
+      } else {
+        return { cancelled: true };
+      }
+    } catch (e) {
+      return { error: true };
+    }
+  }
 
   function registerWithGoogle() {
     var provider = new firebase.auth.GoogleAuthProvider();
@@ -222,7 +284,7 @@ export default function RegisterScreen({ navigation }: { navigation: any }) {
           alignItems: 'center'
         }]}>
           <TouchableOpacity
-            onPress={() => registerWithGoogle()}
+            onPress={() => signInWithGoogleAsync()}
             style={styles.socialMediaButton}>
             <Image
               source={require('../assets/googleicon.png')}
