@@ -206,6 +206,7 @@ function HotMain({ navigation }: { navigation: any }) {
         })
       }).then(function () {
         setMyComment("");
+        getComment(currItem)
       })
     }
     else {
