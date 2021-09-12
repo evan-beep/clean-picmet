@@ -79,7 +79,8 @@ function HotMain({ navigation }: { navigation: any }) {
   const showModal = (item: any) => {
     setCurrItem(item.item)
     if (currImage !== item.item.photourl) {
-      setCurrImage(item.item.photourl)
+      setCurrImage('https://firebasestorage.googleapis.com/v0/b/picmet-app.appspot.com/o/photo%2Ftest1?alt=media&token=64634594-1188-47ba-9e74-aa816f53ce3a')
+      console.log(item.item.photourl)
     }
 
     setVisible(true);
@@ -178,11 +179,6 @@ function HotMain({ navigation }: { navigation: any }) {
     }
   }
 
-  function commentLike(comment: any) {
-  }
-
-  function commentDislike() {
-  }
 
   function sendMyComment() {
     if (currUser) {
@@ -520,7 +516,7 @@ function HotMain({ navigation }: { navigation: any }) {
 
   }
 
-  const ListHeader = () => {
+  function ListHeader() {
     return (
       <View style={styles.flatlistHeaderContainer}>
         <View style={{ backgroundColor: 'white', width: '90%', height: 350, borderRadius: 20 }}>
@@ -569,6 +565,12 @@ function HotMain({ navigation }: { navigation: any }) {
 
 
   const CommentContainer = (item: any) => {
+    function commentLike() {
+
+    }
+    function commentDislike() {
+
+    }
     return (
       <View style={styles.commentContainer}>
         <View style={{ height: 90, display: 'flex', justifyContent: 'flex-start', alignItems: 'flex-start' }}>
