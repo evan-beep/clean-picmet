@@ -13,8 +13,6 @@ import History from './History'
 import Favourites from './Favourites';
 import WishNotes from './WishNotes';
 
-import CachedImage from 'react-native-expo-cached-image';
-
 import firebase from 'firebase/app'
 
 // Optionally import the services that you want to use
@@ -74,7 +72,7 @@ function HotMain({ navigation }: { navigation: any }) {
 
   useEffect(getItem, []);
 
-  const [currImage, setCurrImage] = useState('');
+  const [currImage, setCurrImage] = useState('https://imgur.com/bPYmREY');
   const [currItem, setCurrItem] = React.useState(null);
 
   function detectBday() {
@@ -84,7 +82,8 @@ function HotMain({ navigation }: { navigation: any }) {
         snapshot.forEach(function (childSnapshot) {
           var childData = childSnapshot.val();
           if (childData.email == currUser.email) {
-            if (!childData.bday) {
+            setDisplayName(childData.displayName)
+            if (!childData.bday || childData.bday == "") {
               setHasBirthday(false);
             }
           }
@@ -114,9 +113,13 @@ function HotMain({ navigation }: { navigation: any }) {
   useEffect(() => {
     if (firebaseUser) {
       setCurrUser(firebaseUser);
-      detectBday();
     }
   }, []);
+
+  useEffect(() => {
+    console.log('checked user')
+    detectBday();
+  }, [currUser])
 
   function hideModal() {
     setLikeOrDis('None')
@@ -141,8 +144,12 @@ function HotMain({ navigation }: { navigation: any }) {
 
   const [likeOrDis, setLikeOrDis] = useState('None');
 
+  const [itemRefreshing, setItemRefreshing] = useState(false)
 
-
+  function onItemRefresh() {
+    setItemRefreshing(true)
+    getItem()
+  }
   useEffect(() => {
     setDarkMode(Appearance.getColorScheme() === 'dark');
   }, [])
@@ -371,6 +378,7 @@ function HotMain({ navigation }: { navigation: any }) {
         })
       }).then(
         () => {
+          setItemRefreshing(false)
           fixLayout(itemList);
           itemList = [];
         }
@@ -660,6 +668,14 @@ function HotMain({ navigation }: { navigation: any }) {
   }
 
   function updateDNameBDay() {
+    if (!bday || bday == '') {
+      Alert.alert('請輸入您的生日')
+      return
+    }
+    if (!displayName || displayName == '') {
+      Alert.alert('請輸入您的使用者名稱')
+      return
+    }
     let user_list = firebase.database().ref('user_list');
     user_list.once('value').then(function (snapshot) {
       snapshot.forEach(function (childSnapshot) {
@@ -688,7 +704,7 @@ function HotMain({ navigation }: { navigation: any }) {
           <View style={{ width: '100%', height: 100, alignItems: 'center' }}>
             <Text style={{ color: 'white', fontSize: 25, width: '60%', lineHeight: 30 }}>
               {
-                `在開始之前麻煩您選擇顯示名稱並提供您的生日`
+                `在開始之前請先輸入您的使用者名稱以及生日`
               }
 
             </Text>
@@ -809,6 +825,8 @@ function HotMain({ navigation }: { navigation: any }) {
             renderItem={renderItem}
             horizontal={false}
             numColumns={2}
+            onRefresh={onItemRefresh}
+            refreshing={itemRefreshing}
             contentContainerStyle={{
               display: 'flex',
               justifyContent: 'center',
