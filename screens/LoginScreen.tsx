@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { View, Text, Button, StyleSheet, TouchableOpacity, Image, TextInput, Alert } from 'react-native';
 import firebase from 'firebase/app'
 
@@ -33,7 +33,14 @@ export default function LoginScreen({ navigation }: { navigation: any }) {
   const [password, setPassword] = useState('');
   const [passVisible, setPassVisible] = useState(false);
 
+  const [is_loading_page, setLoading] = useState(false);
+
+  useEffect(() => {
+    setLoading(false)
+  }, [])
+
   function login(e: string, p: string) {
+    setLoading(true);
     firebase.auth().signInWithEmailAndPassword(e, p)
       .then(function () {
         navigation.push('Main');
@@ -107,7 +114,7 @@ export default function LoginScreen({ navigation }: { navigation: any }) {
         </View>
         <View>
           <TouchableOpacity
-            onPress={() => login(email, password)}
+            onPress={is_loading_page ? () => { } : () => login(email, password)}
             style={[styles.midCol, styles.textInputBG, {
               display: 'flex',
               justifyContent: 'center',
