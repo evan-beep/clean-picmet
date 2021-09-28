@@ -92,12 +92,17 @@ function HotMain({ navigation }: { navigation: any }) {
             }
             if (childData.comments_liked_list) {
               let temp = []
-              temp = Object.keys(childData.liked_list)
+              Object.values(childData.comments_liked_list).forEach(function(e){
+                temp.push(e.comment_id);
+              })
               setCommentsLikedList(temp)
             }
             if (childData.comments_disliked_list) {
               let temp = []
-              temp = Object.keys(childData.disliked_list)
+              console.log(childData.comments_disliked_list);
+              Object.values(childData.comments_disliked_list).forEach(function(e){
+                temp.push(e.comment_id);
+              })
               setCommentsDisLikedList(temp)
             }
           }
@@ -609,11 +614,229 @@ function HotMain({ navigation }: { navigation: any }) {
 
   const CommentContainer = (item: any) => {
     function commentLike() {
+      if (currUser) {
+        let user_email = currUser.email;
+        let user_list = firebase.database().ref("user_list");
+        let comment_like_userlist = firebase.database().ref("comment_list/" + item.item.comment_id + "/like_userlist");
+        let comment_dislike_userlist = firebase.database().ref("comment_list/" + item.item.comment_id + "/dislike_userlist");
+        let user_liked_list = null;
+        let user_disliked_list = null;
+        let userKey = null;
+        if(commentsLikedList.includes(item.item.comment_id)){
+          comment_like_userlist.once('value').then(function (snapshot) {
+            snapshot.forEach(function (childSnapshot) {
+              let email = childSnapshot.val().email;
+              if (email == user_email)
+                firebase.database().ref('comment_list/' + item.item.comment_id + "/like_userlist/" + childSnapshot.key).remove();
+            })
+          }).then(function(){
+            user_list.once('value').then(function (snapshot) {
+              snapshot.forEach(function (childSnapshot) {
+                let email = childSnapshot.val().email;
+                if (email == user_email){
+                  user_liked_list = firebase.database().ref("user_list/" + childSnapshot.key + "/comments_liked_list");
+                  userKey = childSnapshot.key;
+                }
+              })
+            }).then(function(){
+              user_liked_list.once('value').then(function (snapshot) {
+                snapshot.forEach(function (childSnapshot) {
+                  if(item.item.comment_id == childSnapshot.val().comment_id){
+                    firebase.database().ref('user_list/' +  userKey + "/comments_liked_list/" + childSnapshot.key).remove();
+                  }
+                })
+              })
+            })
+          }).then(function(){firebase.database().ref("comment_list/" + item.item.comment_id + "/likeNum").get().then(function (e) {
+              e.val();
+              firebase.database().ref("comment_list/" + item.item.comment_id + "/likeNum").set(e.val() - 1);
+            });
+          })
+        }
+        else if(commentsDisLikedList.includes(item.item.comment_id)){
+          comment_dislike_userlist.once('value').then(function (snapshot) {
+            snapshot.forEach(function (childSnapshot) {
+              let email = childSnapshot.val().email;
+              if (email == user_email)
+                firebase.database().ref('comment_list/' + item.item.comment_id + "/dislike_userlist/" + childSnapshot.key).remove();
+            })
+          }).then(function(){
+            user_list.once('value').then(function (snapshot) {
+              snapshot.forEach(function (childSnapshot) {
+                let email = childSnapshot.val().email;
+                if (email == user_email){
+                  user_disliked_list = firebase.database().ref("user_list/" + childSnapshot.key + "/comments_disliked_list");
+                  userKey = childSnapshot.key;
+                }
+              })
+            }).then(function(){
+              user_disliked_list.once('value').then(function (snapshot) {
+                snapshot.forEach(function (childSnapshot) {
+                  if(item.item.comment_id == childSnapshot.val().comment_id){
+                    firebase.database().ref('user_list/' +  userKey + "/comments_disliked_list/" + childSnapshot.key).remove();
+                  }
+                })
+              })
+            })
+          }).then(function(){firebase.database().ref("comment_list/" + item.item.comment_id + "/dislikeNum").get().then(function (e) {
+              e.val();
+              firebase.database().ref("comment_list/" + item.item.comment_id + "/dislikeNum").set(e.val() - 1);
+            });
+          })
 
+          comment_like_userlist.push({email: user_email}).then(function(){
+            user_list.once('value').then(function (snapshot) {
+              snapshot.forEach(function (childSnapshot) {
+                var childData = childSnapshot.val();
+                if (childData.email == user_email) {
+                  let comments_liked_list = firebase.database().ref('user_list/' + childSnapshot.key + "/comments_liked_list");
+                  comments_liked_list.push({
+                    comment_id:item.item.comment_id
+                  })
+                }
+              })
+            }).then(function(){
+              firebase.database().ref("comment_list/" + item.item.comment_id + "/likeNum").get().then(function (e) {
+                e.val();
+                firebase.database().ref("comment_list/" + item.item.comment_id + "/likeNum").set(e.val() + 1);
+              });
+            })
+          });
+        }
+        else{
+          comment_like_userlist.push({email: user_email}).then(function(){
+            user_list.once('value').then(function (snapshot) {
+              snapshot.forEach(function (childSnapshot) {
+                var childData = childSnapshot.val();
+                if (childData.email == user_email) {
+                  let comments_liked_list = firebase.database().ref('user_list/' + childSnapshot.key + "/comments_liked_list");
+                  comments_liked_list.push({
+                    comment_id:item.item.comment_id
+                  })
+                }
+              })
+            }).then(function(){
+              firebase.database().ref("comment_list/" + item.item.comment_id + "/likeNum").get().then(function (e) {
+                e.val();
+                firebase.database().ref("comment_list/" + item.item.comment_id + "/likeNum").set(e.val() + 1);
+              });
+            })
+          });
+        }
+      }
     }
     function commentDislike() {
-
+      if (currUser) {
+        let user_email = currUser.email;
+        let user_list = firebase.database().ref("user_list");
+        let comment_like_userlist = firebase.database().ref("comment_list/" + item.item.comment_id + "/like_userlist");
+        let comment_dislike_userlist = firebase.database().ref("comment_list/" + item.item.comment_id + "/dislike_userlist");
+        let user_liked_list = null;
+        let user_disliked_list = null;
+        let userKey = null;
+        if(commentsDisLikedList.includes(item.item.comment_id)){
+          comment_dislike_userlist.once('value').then(function (snapshot) {
+            snapshot.forEach(function (childSnapshot) {
+              let email = childSnapshot.val().email;
+              if (email == user_email)
+                firebase.database().ref('comment_list/' + item.item.comment_id + "/dislike_userlist/" + childSnapshot.key).remove();
+            })
+          }).then(function(){
+            user_list.once('value').then(function (snapshot) {
+              snapshot.forEach(function (childSnapshot) {
+                let email = childSnapshot.val().email;
+                if (email == user_email){
+                  user_disliked_list = firebase.database().ref("user_list/" + childSnapshot.key + "/comments_disliked_list");
+                  userKey = childSnapshot.key;
+                }
+              })
+            }).then(function(){
+              user_disliked_list.once('value').then(function (snapshot) {
+                snapshot.forEach(function (childSnapshot) {
+                  if(item.item.comment_id == childSnapshot.val().comment_id){
+                    firebase.database().ref('user_list/' +  userKey + "/comments_disliked_list/" + childSnapshot.key).remove();
+                  }
+                })
+              })
+            })
+          }).then(function(){firebase.database().ref("comment_list/" + item.item.comment_id + "/dislikeNum").get().then(function (e) {
+              e.val();
+              firebase.database().ref("comment_list/" + item.item.comment_id + "/dislikeNum").set(e.val() - 1);
+            });
+          })
+        }
+        else if(commentsLikedList.includes(item.item.comment_id)){
+          comment_like_userlist.once('value').then(function (snapshot) {
+            snapshot.forEach(function (childSnapshot) {
+              let email = childSnapshot.val().email;
+              if (email == user_email)
+                firebase.database().ref('comment_list/' + item.item.comment_id + "/dislike_userlist/" + childSnapshot.key).remove();
+            })
+          }).then(function(){
+            user_list.once('value').then(function (snapshot) {
+              snapshot.forEach(function (childSnapshot) {
+                let email = childSnapshot.val().email;
+                if (email == user_email){
+                  user_liked_list = firebase.database().ref("user_list/" + childSnapshot.key + "/comments_liked_list");
+                  userKey = childSnapshot.key;
+                }
+              })
+            }).then(function(){
+              user_liked_list.once('value').then(function (snapshot) {
+                snapshot.forEach(function (childSnapshot) {
+                  if(item.item.comment_id == childSnapshot.val().comment_id){
+                    firebase.database().ref('user_list/' +  userKey + "/comments_liked_list/" + childSnapshot.key).remove();
+                  }
+                })
+              })
+            })
+          }).then(function(){firebase.database().ref("comment_list/" + item.item.comment_id + "/likeNum").get().then(function (e) {
+              e.val();
+              firebase.database().ref("comment_list/" + item.item.comment_id + "/likeNum").set(e.val() - 1);
+            });
+          })
+          comment_dislike_userlist.push({email: user_email}).then(function(){
+            user_list.once('value').then(function (snapshot) {
+              snapshot.forEach(function (childSnapshot) {
+                var childData = childSnapshot.val();
+                if (childData.email == user_email) {
+                  let comments_disliked_list = firebase.database().ref('user_list/' + childSnapshot.key + "/comments_disliked_list");
+                  comments_disliked_list.push({
+                    comment_id:item.item.comment_id
+                  })
+                }
+              })
+            }).then(function(){
+              firebase.database().ref("comment_list/" + item.item.comment_id + "/dislikeNum").get().then(function (e) {
+                e.val();
+                firebase.database().ref("comment_list/" + item.item.comment_id + "/dislikeNum").set(e.val() + 1);
+              });
+            })
+          });
+        }
+        else{
+          comment_dislike_userlist.push({email: user_email}).then(function(){
+            user_list.once('value').then(function (snapshot) {
+              snapshot.forEach(function (childSnapshot) {
+                var childData = childSnapshot.val();
+                if (childData.email == user_email) {
+                  let comments_disliked_list = firebase.database().ref('user_list/' + childSnapshot.key + "/comments_disliked_list");
+                  comments_disliked_list.push({
+                    comment_id:item.item.comment_id
+                  })
+                }
+              })
+            }).then(function(){
+              firebase.database().ref("comment_list/" + item.item.comment_id + "/dislikeNum").get().then(function (e) {
+                e.val();
+                firebase.database().ref("comment_list/" + item.item.comment_id + "/dislikeNum").set(e.val() + 1);
+              });
+            })
+          });
+        }
+      }
     }
+
     let likeStat = 'none';
     if (commentsLikedList.includes(item.item.comment_id)) {
       likeStat = 'liked'
