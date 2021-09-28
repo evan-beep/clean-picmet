@@ -57,6 +57,8 @@ export function DrawerMenu(props: any) {
   useEffect(() => {
     if (firebaseUser) {
       setCurrUser(firebaseUser);
+    } else {
+      setCurrUser(null)
     }
 
   }, []);
@@ -141,10 +143,15 @@ export function DrawerMenu(props: any) {
                     </Text>
                   </View>
                 )}
-                onPress={() => { setCurrPage('wish'); props.navigation.navigate('Wish') }}
+                onPress={() => {
+                  if (currUser) {
+                    setCurrPage('wish'); props.navigation.navigate('Wish')
+
+                  } else {
+                    Alert.alert('請先登入')
+                  }
+                }}
               />
-
-
             </View>
           </View>
 
@@ -177,7 +184,7 @@ export function DrawerMenu(props: any) {
           )}
           onPress={() => {
             firebase.auth().signOut();
-            props.navigation.navigate('Login')
+            props.navigation.push('Login')
           }}
 
         />

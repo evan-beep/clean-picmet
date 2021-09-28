@@ -132,6 +132,8 @@ function HotMain({ navigation }: { navigation: any }) {
   useEffect(() => {
     if (firebaseUser) {
       setCurrUser(firebaseUser);
+    } else {
+      setCurrUser(null)
     }
   }, []);
 
@@ -1108,6 +1110,7 @@ function HotMain({ navigation }: { navigation: any }) {
                     contentContainerStyle={{
                       paddingBottom: 200
                     }}
+                    extraData={itemComments}
                   />
                 </View>
                 <View style={{ position: 'absolute', bottom: 0, height: 100, width: '100%', backgroundColor: '#7CAEDE', display: 'flex', flexDirection: 'row' }}>
