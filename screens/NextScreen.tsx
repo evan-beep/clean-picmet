@@ -75,6 +75,10 @@ function HotMain({ navigation }: { navigation: any }) {
   const [currImage, setCurrImage] = useState('https://imgur.com/bPYmREY');
   const [currItem, setCurrItem] = React.useState(null);
 
+  const [commentsLikedList, setCommentsLikedList] = useState<string[]>([])
+  const [commentsDisLikedList, setCommentsDisLikedList] = useState<string[]>([])
+
+
   function detectBday() {
     if (currUser) {
       let user_list = firebase.database().ref('user_list');
@@ -86,17 +90,27 @@ function HotMain({ navigation }: { navigation: any }) {
             if (!childData.bday || childData.bday == "") {
               setHasBirthday(false);
             }
+            if (childData.comments_liked_list) {
+              let temp = []
+              temp = Object.keys(childData.liked_list)
+              setCommentsLikedList(temp)
+            }
+            if (childData.comments_disliked_list) {
+              let temp = []
+              temp = Object.keys(childData.disliked_list)
+              setCommentsDisLikedList(temp)
+            }
           }
         })
       })
     }
   }
 
+
   const showModal = (item: any) => {
     setCurrItem(item.item)
     if (currImage !== item.item.photourl) {
       setCurrImage('https://firebasestorage.googleapis.com/v0/b/picmet-app.appspot.com/o/photo%2Ftest1?alt=media&token=64634594-1188-47ba-9e74-aa816f53ce3a')
-      console.log(item.item.photourl)
     }
 
     setVisible(true);
@@ -117,7 +131,6 @@ function HotMain({ navigation }: { navigation: any }) {
   }, []);
 
   useEffect(() => {
-    console.log('checked user')
     detectBday();
   }, [currUser])
 
@@ -169,9 +182,11 @@ function HotMain({ navigation }: { navigation: any }) {
   };
   function MainImage() {
     return (
-      <Image source={{ uri: currImage }} style={{ width: '100%', height: '100%', resizeMode: 'contain' }} />
+      <Image source={{ uri: currImage ? currImage : 'https://i.imgur.com/QkPGFdF.jpeg' }} style={{ width: '100%', height: '100%', resizeMode: 'contain' }} />
     )
   }
+
+  const [commentRefreshing, setCommentRefreshing] = useState(false)
 
   function getComment(item: any) {
     let comment_list: any = [];
@@ -188,6 +203,7 @@ function HotMain({ navigation }: { navigation: any }) {
         })
 
       }).then(() => {
+        setCommentRefreshing(false)
         setItemComments(comment_list);
       }
       )
@@ -598,6 +614,15 @@ function HotMain({ navigation }: { navigation: any }) {
     function commentDislike() {
 
     }
+    let likeStat = 'none';
+    if (commentsLikedList.includes(item.item.comment_id)) {
+      likeStat = 'liked'
+    } else if (commentsDisLikedList.includes(item.item.comment_id)) {
+      likeStat = 'dislike'
+    } else {
+      likeStat = 'none'
+    }
+
     return (
       <View style={styles.commentContainer}>
         <View style={{ height: 90, display: 'flex', justifyContent: 'flex-start', alignItems: 'flex-start' }}>
@@ -625,7 +650,7 @@ function HotMain({ navigation }: { navigation: any }) {
 
                 </View>
                 <TouchableOpacity
-                  onPress={() => { commentLike(item.item.id) }}
+                  onPress={() => { commentLike() }}
                   style={styles.likes}>
                   <View style={{ marginRight: 5, width: 20, height: 20 }}>
                     <Image
@@ -855,6 +880,8 @@ function HotMain({ navigation }: { navigation: any }) {
                     renderItem={CommentContainer}
                     ListHeaderComponent={ListHeader}
                     horizontal={false}
+                    onRefresh={() => getComment(currItem)}
+                    refreshing={commentRefreshing}
                     contentContainerStyle={{
                       paddingBottom: 200
                     }}
