@@ -22,6 +22,8 @@ import "firebase/database";
 //import "firebase/functions";
 import "firebase/storage";
 import { Alert } from 'react-native';
+import { createStackNavigator } from '@react-navigation/stack';
+import ItemView from './ItemView';
 
 // Initialize Firebase
 var firebaseConfig = {
@@ -78,7 +80,6 @@ function HotMain({ navigation }: { navigation: any }) {
   const [commentsLikedList, setCommentsLikedList] = useState<string[]>([])
   const [commentsDisLikedList, setCommentsDisLikedList] = useState<string[]>([])
 
-
   function detectBday() {
     if (currUser) {
       let user_list = firebase.database().ref('user_list');
@@ -92,7 +93,7 @@ function HotMain({ navigation }: { navigation: any }) {
             }
             if (childData.comments_liked_list) {
               let temp = []
-              Object.values(childData.comments_liked_list).forEach(function(e){
+              Object.values(childData.comments_liked_list).forEach(function (e) {
                 temp.push(e.comment_id);
               })
               setCommentsLikedList(temp)
@@ -100,7 +101,7 @@ function HotMain({ navigation }: { navigation: any }) {
             if (childData.comments_disliked_list) {
               let temp = []
               console.log(childData.comments_disliked_list);
-              Object.values(childData.comments_disliked_list).forEach(function(e){
+              Object.values(childData.comments_disliked_list).forEach(function (e) {
                 temp.push(e.comment_id);
               })
               setCommentsDisLikedList(temp)
@@ -124,6 +125,7 @@ function HotMain({ navigation }: { navigation: any }) {
       firebase.database().ref("item_list/" + item.item.id + "/click").set(e.val() + 1);
     });
     getComment(item.item);
+    navigation.navigate('Item')
   };
   const [currUser, setCurrUser] = useState<any>(null);
 
@@ -141,13 +143,7 @@ function HotMain({ navigation }: { navigation: any }) {
     detectBday();
   }, [currUser])
 
-  function hideModal() {
-    setLikeOrDis('None')
-    setCurrImage('')
-    setVisible(false);
-  }
   const [visible, setVisible] = React.useState(false);
-  const [is_favorite, setIs_favorite] = useState(false);
   const [searchQuery, setSearchQuery] = useState<string>('');
 
   const [hotMainItems, setHotMainItems] = useState<any>([]);
@@ -155,14 +151,14 @@ function HotMain({ navigation }: { navigation: any }) {
   const [hasBirthday, setHasBirthday] = useState(true);
 
   const [myComment, setMyComment] = useState('');
-  const [itemComments, setItemComments] = useState<any[]>([]);
+  const [likeOrDis, setLikeOrDis] = useState('None');
 
   const [bday, setBday] = useState(null);
   const [displayName, setDisplayName] = useState('');
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
+  const [is_favorite, setIs_favorite] = useState(false);
 
-  const [likeOrDis, setLikeOrDis] = useState('None');
 
   const [itemRefreshing, setItemRefreshing] = useState(false)
 
@@ -187,13 +183,8 @@ function HotMain({ navigation }: { navigation: any }) {
     setBday(date);
     hideDatePicker();
   };
-  function MainImage() {
-    return (
-      <Image source={{ uri: currImage ? currImage : 'https://i.imgur.com/QkPGFdF.jpeg' }} style={{ width: '100%', height: '100%', resizeMode: 'contain' }} />
-    )
-  }
 
-  const [commentRefreshing, setCommentRefreshing] = useState(false)
+
 
   function getComment(item: any) {
     let comment_list: any = [];
@@ -228,168 +219,7 @@ function HotMain({ navigation }: { navigation: any }) {
   }
 
 
-  function sendMyComment() {
-    if (currUser) {
-      let user_email = currUser.email;
-      let comment_list = firebase.database().ref('comment_list');
-      comment_list.push({
-        user_email: user_email,
-        itemID: currItem.id,
-        content: myComment,
-        name: currUser.displayName
-      }).then(async function (e) {
-        let comment_id = e.path.pieces_[1];
-        let user_list = firebase.database().ref('user_list');
-        await user_list.once('value').then(function (snapshot) {
-          snapshot.forEach(function (childSnapshot) {
-            var childData = childSnapshot.val();
-            if (childData.email == user_email) {
-              firebase.database().ref("user_list/" + childSnapshot.key + "/comment_list").push(comment_id)
-            }
-          })
-        })
-        firebase.database().ref('item_list/' + currItem.id + "/comment_list").push(comment_id);
-        firebase.database().ref('item_list/' + currItem.id + "/commentNum").get().then(function (e) {
-          firebase.database().ref('item_list/' + currItem.id + "/commentNum").set(e.val() + 1);
-        })
-      }).then(function () {
-        setMyComment("");
-        getComment(currItem)
-      })
-    }
-    else {
-      Alert.alert("錯誤", "請先登入才可使用此功能");
-      setMyComment("");
-    }
-  }
 
-  function itemLike() {
-    if (currUser) {
-      let user_email = currUser.email;
-      let user_list = firebase.database().ref("user_list");
-      let like_userlist = firebase.database().ref("item_list/" + currItem.id + "/like_userlist");
-      if (likeOrDis === 'Like') {
-        like_userlist.once('value').then(function (snapshot) {
-          snapshot.forEach(function (childSnapshot) {
-            let email = childSnapshot.val().email;
-            if (email == user_email)
-              firebase.database().ref('item_list/' + currItem.id + "/like_userlist/" + childSnapshot.key).remove();
-          })
-        }).then(function () {
-          user_list.once('value').then(function (snapshot) {
-            snapshot.forEach(function (childSnapshot) {
-              var childData = childSnapshot.val();
-              if (childData.email == user_email) {
-                let user_liked_list = firebase.database().ref('user_list/' + childSnapshot.key + "/liked_list");
-                user_liked_list.once('value').then(function (s) {
-                  s.forEach(function (c) {
-                    let itemID = c.val().itemID;
-                    if (itemID == currItem.id) {
-                      firebase.database().ref('user_list/' + childSnapshot.key + "/liked_list/" + c.key).remove();
-                    }
-                  })
-                }).then(function () {
-                  firebase.database().ref("item_list/" + currItem.id + "/likeNum").get().then(function (e) {
-                    firebase.database().ref("item_list/" + currItem.id + "/likeNum").set(e.val() - 1);
-                  });
-                  setLikeOrDis("None")
-                })
-              }
-            })
-          })
-        })
-      }
-      if (likeOrDis === 'None') {
-        like_userlist.push({
-          email: user_email
-        }).then(function () {
-          user_list.once('value').then(function (snapshot) {
-            snapshot.forEach(function (childSnapshot) {
-              var childData = childSnapshot.val();
-              if (childData.email == user_email) {
-                let user_liked_list = firebase.database().ref('user_list/' + childSnapshot.key + "/liked_list");
-                user_liked_list.push({
-                  itemID: currItem.id
-                })
-              }
-            })
-          })
-        }).then(function () {
-          firebase.database().ref("item_list/" + currItem.id + "/likeNum").get().then(function (e) {
-            firebase.database().ref("item_list/" + currItem.id + "/likeNum").set(e.val() + 1);
-          });
-          setLikeOrDis("Like")
-        })
-      }
-    }
-    else {
-      Alert.alert("錯誤", "請先登入才可使用此功能");
-    }
-  }
-
-  function itemDislike() {
-    if (currUser) {
-      let user_email = currUser.email;
-      let user_list = firebase.database().ref("user_list");
-      let dislike_userlist = firebase.database().ref("item_list/" + currItem.id + "/dislike_userlist");
-      if (likeOrDis === 'Dislike') {
-        dislike_userlist.once('value').then(function (snapshot) {
-          snapshot.forEach(function (childSnapshot) {
-            let email = childSnapshot.val().email;
-            if (email == user_email)
-              firebase.database().ref('item_list/' + currItem.id + "/dislike_userlist/" + childSnapshot.key).remove();
-          })
-        }).then(function () {
-          user_list.once('value').then(function (snapshot) {
-            snapshot.forEach(function (childSnapshot) {
-              var childData = childSnapshot.val();
-              if (childData.email == user_email) {
-                let user_disliked_list = firebase.database().ref('user_list/' + childSnapshot.key + "/disliked_list");
-                user_disliked_list.once('value').then(function (s) {
-                  s.forEach(function (c) {
-                    let itemID = c.val().itemID;
-                    if (itemID == currItem.id) {
-                      firebase.database().ref('user_list/' + childSnapshot.key + "/disliked_list/" + c.key).remove();
-                    }
-                  })
-                }).then(function () {
-                  firebase.database().ref("item_list/" + currItem.id + "/dislikeNum").get().then(function (e) {
-                    firebase.database().ref("item_list/" + currItem.id + "/dislikeNum").set(e.val() - 1);
-                  });
-                  setLikeOrDis("None")
-                })
-              }
-            })
-          })
-        })
-      }
-      if (likeOrDis === 'None') {
-        dislike_userlist.push({
-          email: user_email
-        }).then(function () {
-          user_list.once('value').then(function (snapshot) {
-            snapshot.forEach(function (childSnapshot) {
-              var childData = childSnapshot.val();
-              if (childData.email == user_email) {
-                let user_disliked_list = firebase.database().ref('user_list/' + childSnapshot.key + "/disliked_list");
-                user_disliked_list.push({
-                  itemID: currItem.id
-                })
-              }
-            })
-          })
-        }).then(function () {
-          firebase.database().ref("item_list/" + currItem.id + "/dislikeNum").get().then(function (e) {
-            firebase.database().ref("item_list/" + currItem.id + "/dislikeNum").set(e.val() + 1);
-          });
-          setLikeOrDis("Dislike")
-        })
-      }
-    }
-    else {
-      Alert.alert("錯誤", "請先登入才可使用此功能");
-    }
-  }
 
   function getItem() {
 
@@ -408,44 +238,6 @@ function HotMain({ navigation }: { navigation: any }) {
       )
   }
 
-  function addToFavourite() {
-    if (currUser) {
-      let user_email = currUser.email;
-      let user_list = firebase.database().ref('user_list');
-      user_list.once('value').then(function (snapshot) {
-        snapshot.forEach(function (childSnapshot) {
-          var childData = childSnapshot.val();
-          if (childData.email == user_email) {
-            let user_favorite_list = firebase.database().ref('user_list/' + childSnapshot.key + "/favorite_list");
-            user_favorite_list.once('value').then(function (s) {
-              s.forEach(function (c) {
-                let itemID = c.val().itemID;
-                if (itemID == currItem.id) {
-                  firebase.database().ref('user_list/' + childSnapshot.key + "/favorite_list/" + c.key).remove();
-                }
-              })
-            }).then(function () {
-              if (!is_favorite) {
-                user_favorite_list.push({
-                  itemID: currItem.id
-                })
-                setIs_favorite(true);
-                Alert.alert("添加成功", "成功添加至我的最愛");
-              }
-              else {
-                setIs_favorite(false);
-                Alert.alert("刪除成功", "成功從我的最愛中刪除");
-              }
-            })
-          }
-        })
-      })
-
-    }
-    else {
-      Alert.alert("添加失敗", "請先等入才可添加商品至最愛！");
-    }
-  }
 
   const renderItem = (item: any) => {
     return (
@@ -566,348 +358,7 @@ function HotMain({ navigation }: { navigation: any }) {
 
   }
 
-  function ListHeader() {
-    return (
-      <View style={styles.flatlistHeaderContainer}>
-        <View style={{ backgroundColor: 'white', width: '90%', height: 350, borderRadius: 20 }}>
-          <MainImage photourl={currImage} />
-        </View>
-        <View style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-          <Text style={{ fontSize: 40, color: 'white', fontWeight: '700', marginTop: 15, maxWidth: '80%', overflow: 'scroll' }}>
-            {currItem.name}
-          </Text>
-        </View>
-        <View style={{ marginTop: 15, width: '80%', height: 60, display: 'flex', flexDirection: 'row', justifyContent: 'center', alignItems: 'center' }}>
-          <TouchableOpacity
-            onPress={itemLike}
-            style={likeOrDis === 'Dislike' ? { display: 'none' } : { width: '40%', height: 50, alignItems: 'center', justifyContent: 'center' }}>
-            <Image
-              style={{ width: 50, height: 50, resizeMode: 'contain' }}
-              source={require('../assets/like.png')}
-            />
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={itemDislike}
-            style={likeOrDis === 'Like' ? { display: 'none' } : { width: '40%', height: 50, alignItems: 'center', justifyContent: 'center' }}>
-            <Image
-              style={{ width: 50, height: 50, resizeMode: 'contain' }}
-              source={require('../assets/dislike.png')}
-            />
-          </TouchableOpacity>
-        </View>
-        <TouchableOpacity onPress={addToFavourite} style={{ marginTop: 15, width: '80%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-          <View style={{ width: '100%', height: 50, backgroundColor: '#7CAEDE', borderRadius: 20, display: 'flex', justifyContent: 'center', alignItems: 'center', flexDirection: 'row' }}>
-            <View style={{ width: 50, height: 30 }}></View>
-            <Text style={{ color: 'white', fontSize: 20, fontWeight: '600' }}>{is_favorite ? '已添加至我的最愛' : '添加至我的最愛'}</Text>
-            <Image source={require('../assets/star_outline.png')} style={is_favorite ? { display: 'none' } : { marginLeft: 20, width: 30, height: 30, resizeMode: 'contain' }} />
-            <Image source={require('../assets/star_filled.png')} style={is_favorite ? { marginLeft: 20, width: 30, height: 30, resizeMode: 'contain' } : { display: 'none' }} />
-          </View>
 
-        </TouchableOpacity>
-        <View style={{ width: '100%', height: 50, display: 'flex', justifyContent: 'flex-end', alignItems: 'center', }}>
-          <Text style={{ color: 'white', fontSize: 20, fontWeight: '600' }}>
-            留言
-          </Text>
-        </View>
-      </View>
-    )
-  }
-
-
-  const CommentContainer = (item: any) => {
-    function commentLike() {
-      if (currUser) {
-        let user_email = currUser.email;
-        let user_list = firebase.database().ref("user_list");
-        let comment_like_userlist = firebase.database().ref("comment_list/" + item.item.comment_id + "/like_userlist");
-        let comment_dislike_userlist = firebase.database().ref("comment_list/" + item.item.comment_id + "/dislike_userlist");
-        let user_liked_list = null;
-        let user_disliked_list = null;
-        let userKey = null;
-        if(commentsLikedList.includes(item.item.comment_id)){
-          comment_like_userlist.once('value').then(function (snapshot) {
-            snapshot.forEach(function (childSnapshot) {
-              let email = childSnapshot.val().email;
-              if (email == user_email)
-                firebase.database().ref('comment_list/' + item.item.comment_id + "/like_userlist/" + childSnapshot.key).remove();
-            })
-          }).then(function(){
-            user_list.once('value').then(function (snapshot) {
-              snapshot.forEach(function (childSnapshot) {
-                let email = childSnapshot.val().email;
-                if (email == user_email){
-                  user_liked_list = firebase.database().ref("user_list/" + childSnapshot.key + "/comments_liked_list");
-                  userKey = childSnapshot.key;
-                }
-              })
-            }).then(function(){
-              user_liked_list.once('value').then(function (snapshot) {
-                snapshot.forEach(function (childSnapshot) {
-                  if(item.item.comment_id == childSnapshot.val().comment_id){
-                    firebase.database().ref('user_list/' +  userKey + "/comments_liked_list/" + childSnapshot.key).remove();
-                  }
-                })
-              })
-            })
-          }).then(function(){firebase.database().ref("comment_list/" + item.item.comment_id + "/likeNum").get().then(function (e) {
-              e.val();
-              firebase.database().ref("comment_list/" + item.item.comment_id + "/likeNum").set(e.val() - 1);
-            });
-          })
-        }
-        else if(commentsDisLikedList.includes(item.item.comment_id)){
-          comment_dislike_userlist.once('value').then(function (snapshot) {
-            snapshot.forEach(function (childSnapshot) {
-              let email = childSnapshot.val().email;
-              if (email == user_email)
-                firebase.database().ref('comment_list/' + item.item.comment_id + "/dislike_userlist/" + childSnapshot.key).remove();
-            })
-          }).then(function(){
-            user_list.once('value').then(function (snapshot) {
-              snapshot.forEach(function (childSnapshot) {
-                let email = childSnapshot.val().email;
-                if (email == user_email){
-                  user_disliked_list = firebase.database().ref("user_list/" + childSnapshot.key + "/comments_disliked_list");
-                  userKey = childSnapshot.key;
-                }
-              })
-            }).then(function(){
-              user_disliked_list.once('value').then(function (snapshot) {
-                snapshot.forEach(function (childSnapshot) {
-                  if(item.item.comment_id == childSnapshot.val().comment_id){
-                    firebase.database().ref('user_list/' +  userKey + "/comments_disliked_list/" + childSnapshot.key).remove();
-                  }
-                })
-              })
-            })
-          }).then(function(){firebase.database().ref("comment_list/" + item.item.comment_id + "/dislikeNum").get().then(function (e) {
-              e.val();
-              firebase.database().ref("comment_list/" + item.item.comment_id + "/dislikeNum").set(e.val() - 1);
-            });
-          })
-
-          comment_like_userlist.push({email: user_email}).then(function(){
-            user_list.once('value').then(function (snapshot) {
-              snapshot.forEach(function (childSnapshot) {
-                var childData = childSnapshot.val();
-                if (childData.email == user_email) {
-                  let comments_liked_list = firebase.database().ref('user_list/' + childSnapshot.key + "/comments_liked_list");
-                  comments_liked_list.push({
-                    comment_id:item.item.comment_id
-                  })
-                }
-              })
-            }).then(function(){
-              firebase.database().ref("comment_list/" + item.item.comment_id + "/likeNum").get().then(function (e) {
-                e.val();
-                firebase.database().ref("comment_list/" + item.item.comment_id + "/likeNum").set(e.val() + 1);
-              });
-            })
-          });
-        }
-        else{
-          comment_like_userlist.push({email: user_email}).then(function(){
-            user_list.once('value').then(function (snapshot) {
-              snapshot.forEach(function (childSnapshot) {
-                var childData = childSnapshot.val();
-                if (childData.email == user_email) {
-                  let comments_liked_list = firebase.database().ref('user_list/' + childSnapshot.key + "/comments_liked_list");
-                  comments_liked_list.push({
-                    comment_id:item.item.comment_id
-                  })
-                }
-              })
-            }).then(function(){
-              firebase.database().ref("comment_list/" + item.item.comment_id + "/likeNum").get().then(function (e) {
-                e.val();
-                firebase.database().ref("comment_list/" + item.item.comment_id + "/likeNum").set(e.val() + 1);
-              });
-            })
-          });
-        }
-      }
-    }
-    function commentDislike() {
-      if (currUser) {
-        let user_email = currUser.email;
-        let user_list = firebase.database().ref("user_list");
-        let comment_like_userlist = firebase.database().ref("comment_list/" + item.item.comment_id + "/like_userlist");
-        let comment_dislike_userlist = firebase.database().ref("comment_list/" + item.item.comment_id + "/dislike_userlist");
-        let user_liked_list = null;
-        let user_disliked_list = null;
-        let userKey = null;
-        if(commentsDisLikedList.includes(item.item.comment_id)){
-          comment_dislike_userlist.once('value').then(function (snapshot) {
-            snapshot.forEach(function (childSnapshot) {
-              let email = childSnapshot.val().email;
-              if (email == user_email)
-                firebase.database().ref('comment_list/' + item.item.comment_id + "/dislike_userlist/" + childSnapshot.key).remove();
-            })
-          }).then(function(){
-            user_list.once('value').then(function (snapshot) {
-              snapshot.forEach(function (childSnapshot) {
-                let email = childSnapshot.val().email;
-                if (email == user_email){
-                  user_disliked_list = firebase.database().ref("user_list/" + childSnapshot.key + "/comments_disliked_list");
-                  userKey = childSnapshot.key;
-                }
-              })
-            }).then(function(){
-              user_disliked_list.once('value').then(function (snapshot) {
-                snapshot.forEach(function (childSnapshot) {
-                  if(item.item.comment_id == childSnapshot.val().comment_id){
-                    firebase.database().ref('user_list/' +  userKey + "/comments_disliked_list/" + childSnapshot.key).remove();
-                  }
-                })
-              })
-            })
-          }).then(function(){firebase.database().ref("comment_list/" + item.item.comment_id + "/dislikeNum").get().then(function (e) {
-              e.val();
-              firebase.database().ref("comment_list/" + item.item.comment_id + "/dislikeNum").set(e.val() - 1);
-            });
-          })
-        }
-        else if(commentsLikedList.includes(item.item.comment_id)){
-          comment_like_userlist.once('value').then(function (snapshot) {
-            snapshot.forEach(function (childSnapshot) {
-              let email = childSnapshot.val().email;
-              if (email == user_email)
-                firebase.database().ref('comment_list/' + item.item.comment_id + "/dislike_userlist/" + childSnapshot.key).remove();
-            })
-          }).then(function(){
-            user_list.once('value').then(function (snapshot) {
-              snapshot.forEach(function (childSnapshot) {
-                let email = childSnapshot.val().email;
-                if (email == user_email){
-                  user_liked_list = firebase.database().ref("user_list/" + childSnapshot.key + "/comments_liked_list");
-                  userKey = childSnapshot.key;
-                }
-              })
-            }).then(function(){
-              user_liked_list.once('value').then(function (snapshot) {
-                snapshot.forEach(function (childSnapshot) {
-                  if(item.item.comment_id == childSnapshot.val().comment_id){
-                    firebase.database().ref('user_list/' +  userKey + "/comments_liked_list/" + childSnapshot.key).remove();
-                  }
-                })
-              })
-            })
-          }).then(function(){firebase.database().ref("comment_list/" + item.item.comment_id + "/likeNum").get().then(function (e) {
-              e.val();
-              firebase.database().ref("comment_list/" + item.item.comment_id + "/likeNum").set(e.val() - 1);
-            });
-          })
-          comment_dislike_userlist.push({email: user_email}).then(function(){
-            user_list.once('value').then(function (snapshot) {
-              snapshot.forEach(function (childSnapshot) {
-                var childData = childSnapshot.val();
-                if (childData.email == user_email) {
-                  let comments_disliked_list = firebase.database().ref('user_list/' + childSnapshot.key + "/comments_disliked_list");
-                  comments_disliked_list.push({
-                    comment_id:item.item.comment_id
-                  })
-                }
-              })
-            }).then(function(){
-              firebase.database().ref("comment_list/" + item.item.comment_id + "/dislikeNum").get().then(function (e) {
-                e.val();
-                firebase.database().ref("comment_list/" + item.item.comment_id + "/dislikeNum").set(e.val() + 1);
-              });
-            })
-          });
-        }
-        else{
-          comment_dislike_userlist.push({email: user_email}).then(function(){
-            user_list.once('value').then(function (snapshot) {
-              snapshot.forEach(function (childSnapshot) {
-                var childData = childSnapshot.val();
-                if (childData.email == user_email) {
-                  let comments_disliked_list = firebase.database().ref('user_list/' + childSnapshot.key + "/comments_disliked_list");
-                  comments_disliked_list.push({
-                    comment_id:item.item.comment_id
-                  })
-                }
-              })
-            }).then(function(){
-              firebase.database().ref("comment_list/" + item.item.comment_id + "/dislikeNum").get().then(function (e) {
-                e.val();
-                firebase.database().ref("comment_list/" + item.item.comment_id + "/dislikeNum").set(e.val() + 1);
-              });
-            })
-          });
-        }
-      }
-    }
-
-    let likeStat = 'none';
-    if (commentsLikedList.includes(item.item.comment_id)) {
-      likeStat = 'liked'
-    } else if (commentsDisLikedList.includes(item.item.comment_id)) {
-      likeStat = 'dislike'
-    } else {
-      likeStat = 'none'
-    }
-
-    return (
-      <View style={styles.commentContainer}>
-        <View style={{ height: 90, display: 'flex', justifyContent: 'flex-start', alignItems: 'flex-start' }}>
-          <View style={{ height: 50, width: 50, marginLeft: 10 }}>
-            <Image
-              style={{ width: 50, height: 50, resizeMode: 'contain', flex: 1 }}
-              source={require('../assets/account_default.png')}
-            />
-          </View>
-
-        </View>
-        <View style={{ display: 'flex', flexGrow: 6, flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-          <View style={{ minHeight: 80, width: '90%', backgroundColor: '#00C7DC', borderRadius: 10, alignItems: 'center', justifyContent: 'space-between' }}>
-            <View style={{ height: 30, width: '90%', marginTop: 10 }}>
-              <Text style={{ fontSize: 18, color: 'white', fontWeight: '500' }}>
-                {item.item.name} 說：
-              </Text>
-            </View>
-            <View style={{ width: '90%' }}>
-              <Text style={{ fontSize: 18, color: 'white', fontWeight: '500' }}>{item.item.content}</Text>
-            </View>
-            <View style={{ height: 30, width: '100%', justifyContent: 'flex-end', marginBottom: 5 }}>
-              <View style={{ display: 'flex', flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'flex-end' }}>
-                <View style={{ flex: 2 }}>
-
-                </View>
-                <TouchableOpacity
-                  onPress={() => { commentLike() }}
-                  style={styles.likes}>
-                  <View style={{ marginRight: 5, width: 20, height: 20 }}>
-                    <Image
-                      source={require('../assets/like.png')}
-                      style={{ width: 20, height: 20, resizeMode: 'contain' }}
-                    />
-                  </View>
-                  <Text style={styles.likeTXT}>
-                    {item.item.likes}
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  onPress={commentDislike}
-                  style={styles.likes}>
-                  <View style={{ marginRight: 5, width: 20, height: 20 }}>
-                    <Image
-                      source={require('../assets/dislike.png')}
-                      style={{ width: 20, height: 20, resizeMode: 'contain' }}
-                    />
-                  </View>
-
-                  <Text style={styles.likeTXT}>
-                    {item.item.dislikes}
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </View>
-        </View>
-      </View>
-    )
-  }
 
   const mainHeader = () => {
     return (
@@ -1087,56 +538,6 @@ function HotMain({ navigation }: { navigation: any }) {
         </View>
 
         <Portal>
-          <Modal style={{ marginTop: 0, marginBottom: 0 }} visible={visible} onDismiss={hideModal}>
-            <KeyboardAvoidingView
-              behavior={(Platform.OS === 'ios') ? "padding" : undefined} style={{ backgroundColor: '#DE75BE' }}>
-              <View style={{ height: '100%', width: '100%', backgroundColor: '#DE75BE', alignItems: 'center', justifyContent: 'flex-start' }}>
-                <View style={[styles.topContainer,]}>
-                  <TouchableOpacity style={styles.backButton} onPress={hideModal}>
-                    <Image
-                      style={[styles.backButton, { resizeMode: 'contain' }]}
-                      source={require('../assets/backarrow.png')} />
-                  </TouchableOpacity>
-                </View>
-                <View style={styles.flatList}>
-                  <FlatList
-                    data={itemComments}
-                    keyExtractor={item => item.comment_id.toString()}
-                    renderItem={CommentContainer}
-                    ListHeaderComponent={ListHeader}
-                    horizontal={false}
-                    onRefresh={() => getComment(currItem)}
-                    refreshing={commentRefreshing}
-                    contentContainerStyle={{
-                      paddingBottom: 200
-                    }}
-                    extraData={itemComments}
-                  />
-                </View>
-                <View style={{ position: 'absolute', bottom: 0, height: 100, width: '100%', backgroundColor: '#7CAEDE', display: 'flex', flexDirection: 'row' }}>
-                  <View style={{ width: '80%', height: 40, backgroundColor: 'white', borderRadius: 10, display: 'flex', justifyContent: 'center', margin: 10, marginTop: 20 }}>
-                    <TextInput
-                      value={myComment}
-                      onChangeText={setMyComment}
-                      style={{ marginLeft: 10, width: '95%', height: '90%', fontSize: 20, fontWeight: '500' }}
-                      placeholder="我想說⋯⋯"
-                    />
-                  </View>
-                  <TouchableOpacity
-                    onPress={sendMyComment}
-                    style={{ width: 40, height: 40, marginTop: 20 }}>
-                    <Image
-                      style={{ width: 40, height: 40, resizeMode: 'contain' }}
-                      source={require('../assets/send.png')} />
-
-                  </TouchableOpacity>
-                </View>
-              </View>
-            </KeyboardAvoidingView>
-          </Modal>
-        </Portal>
-
-        <Portal>
           <Modal style={{ marginTop: 0, marginBottom: 0 }} visible={!hasBirthday}>
             {GetBdayModal()}
           </Modal>
@@ -1145,15 +546,27 @@ function HotMain({ navigation }: { navigation: any }) {
     </Provider>
   )
 }
+const Stack2 = createStackNavigator();
 
+function MainNavi({ navigation }: { navigation: any }) {
+  return (
+    <Provider>
+      <Stack2.Navigator
+        screenOptions={{ headerShown: false, gestureEnabled: false }}>
+        <Stack2.Screen name="HotMain" component={HotMain} />
+        <Stack2.Screen name="Item" component={ItemView} />
+      </Stack2.Navigator>
+    </Provider>
 
+  );
+}
 
 export default function MainProductPage({ navigation }: { navigation: any }) {
   return (
     <Drawer.Navigator
       screenOptions={{ headerShown: false, gestureEnabled: true }}
       initialRouteName="Home" drawerContent={props => <DrawerMenu {...props} />}>
-      <Drawer.Screen name="Home" component={HotMain} />
+      <Drawer.Screen name="Home" component={MainNavi} />
       <Drawer.Screen name="History" component={History} />
       <Drawer.Screen name="Fav" component={Favourites} />
       <Drawer.Screen name="Wish" component={WishNotes} />
