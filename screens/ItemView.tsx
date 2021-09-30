@@ -2,16 +2,7 @@ import * as React from 'react';
 import { useEffect, useState } from 'react';
 import { View, Button, TouchableOpacity, Image, StyleSheet, TextInput, FlatList, Platform, KeyboardAvoidingView, Appearance } from 'react-native';
 
-import { createDrawerNavigator } from '@react-navigation/drawer';
-import { NavigationContainer } from '@react-navigation/native';
-import { DrawerMenu, } from './DrawerMenu';
-import DateTimePickerModal from "react-native-modal-datetime-picker";
-
 import { Modal, Portal, Provider, Text } from 'react-native-paper';
-
-import History from './History'
-import Favourites from './Favourites';
-import WishNotes from './WishNotes';
 
 import firebase from 'firebase/app'
 
@@ -46,6 +37,10 @@ if (!firebase.apps.length) {
 
 export default function ItemView({ route, navigation }: { route: any, navigation: any }) {
 
+  const props = route.params.CurrItem
+  const liked = route.params.Liked
+
+
   const [itemComments, setItemComments] = useState<any[]>([]);
   const [commentRefreshing, setCommentRefreshing] = useState(false)
   const [myComment, setMyComment] = useState('');
@@ -53,15 +48,11 @@ export default function ItemView({ route, navigation }: { route: any, navigation
 
   const [commentsLikedList, setCommentsLikedList] = useState<string[]>([])
   const [commentsDisLikedList, setCommentsDisLikedList] = useState<string[]>([])
-  const [currItem, setCurrItem] = React.useState({
-    name: 'check'
-  });
-  const [currImage, setCurrImage] = useState('https://imgur.com/bPYmREY');
-  const [likeOrDis, setLikeOrDis] = useState('None');
+  const [currItem, setCurrItem] = React.useState(props.item);
+  const [currImage, setCurrImage] = useState(props.item.photourl);
+  const [likeOrDis, setLikeOrDis] = useState('none');
   const [is_favorite, setIs_favorite] = useState(false);
 
-  const props = route.params
-  console.log(props)
 
   const firebaseUser = firebase.auth().currentUser;
 
@@ -71,7 +62,64 @@ export default function ItemView({ route, navigation }: { route: any, navigation
     } else {
       setCurrUser(null)
     }
+    getComment(props.item);
+    if (currUser) {
+      let user_email = currUser.email;
+      let user_list = firebase.database().ref('user_list');
+      user_list.once('value').then(function (snapshot) {
+        snapshot.forEach(function (childSnapshot) {
+          var childData = childSnapshot.val();
+          if (childData.email == user_email) {
+            let user_favorite_list = firebase.database().ref('user_list/' + childSnapshot.key + "/favorite_list");
+            let user_liked_list = firebase.database().ref('user_list/' + childSnapshot.key + '/liked_list');
+            let user_disliked_list = firebase.database().ref('user_list/' + childSnapshot.key + '/disliked_list');
+            user_favorite_list.once('value').then(function (s) {
+              s.forEach(function (c) {
+                let itemID = c.val().itemID;
+                if (itemID == currItem.id) {
+                  setIs_favorite(true);
+                }
+              })
+            })
+            user_liked_list.once('value').then(function (s) {
+              s.forEach(function (c) {
+                let itemID = c.val().itemID;
+                if (itemID == currItem.id) {
+                  setLikeOrDis("Like");
+                }
+              })
+            })
+            user_disliked_list.once('value').then(function (s) {
+              s.forEach(function (c) {
+                let itemID = c.val().itemID;
+                if (itemID == currItem.id) {
+                  setLikeOrDis("Dislike");
+                }
+              })
+            })
+            let user_history_list = firebase.database().ref('user_list/' + childSnapshot.key + "/history_list");
+            user_history_list.once('value').then(function (s) {
+              s.forEach(function (c) {
+                let itemID = c.val().itemID;
+                if (itemID == currItem.id) {
+                  firebase.database().ref('user_list/' + childSnapshot.key + "/history_list/" + c.key).remove();
+                }
+              })
+            }).then(function () {
+              user_history_list.push({
+                itemID: currItem.id
+              })
+            })
+          }
+        })
+      })
+    }
+
   }, []);
+
+  useEffect(() => {
+    console.log(likeOrDis)
+  }, [likeOrDis])
 
   const CommentContainer = (item: any) => {
     function commentLike() {
@@ -408,14 +456,14 @@ export default function ItemView({ route, navigation }: { route: any, navigation
                   firebase.database().ref("item_list/" + currItem.id + "/likeNum").get().then(function (e) {
                     firebase.database().ref("item_list/" + currItem.id + "/likeNum").set(e.val() - 1);
                   });
-                  setLikeOrDis("None")
+                  setLikeOrDis("none")
                 })
               }
             })
           })
         })
       }
-      if (likeOrDis === 'None') {
+      if (likeOrDis === 'none') {
         like_userlist.push({
           email: user_email
         }).then(function () {
@@ -472,14 +520,14 @@ export default function ItemView({ route, navigation }: { route: any, navigation
                   firebase.database().ref("item_list/" + currItem.id + "/dislikeNum").get().then(function (e) {
                     firebase.database().ref("item_list/" + currItem.id + "/dislikeNum").set(e.val() - 1);
                   });
-                  setLikeOrDis("None")
+                  setLikeOrDis("none")
                 })
               }
             })
           })
         })
       }
-      if (likeOrDis === 'None') {
+      if (likeOrDis === 'none') {
         dislike_userlist.push({
           email: user_email
         }).then(function () {
@@ -660,7 +708,10 @@ export default function ItemView({ route, navigation }: { route: any, navigation
         behavior={(Platform.OS === 'ios') ? "padding" : undefined} style={{ backgroundColor: '#DE75BE' }}>
         <View style={{ height: '100%', width: '100%', backgroundColor: '#DE75BE', alignItems: 'center', justifyContent: 'flex-start' }}>
           <View style={[styles.topContainer,]}>
-            <TouchableOpacity style={styles.backButton} onPress={() => { navigation.navigate('HotMain') }}>
+            <TouchableOpacity style={styles.backButton} onPress={() => {
+              navigation.navigate('HotMain')
+              setLikeOrDis('none')
+            }}>
               <Image
                 style={[styles.backButton, { resizeMode: 'contain' }]}
                 source={require('../assets/backarrow.png')} />

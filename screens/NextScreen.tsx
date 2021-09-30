@@ -45,30 +45,8 @@ if (!firebase.apps.length) {
 
 const Drawer = createDrawerNavigator();
 
-const DATA = [
-  { id: 1, name: 'kajhdas', likes: '121', dislikes: '3', comments: '10', imageURL: "https://i.imgur.com/I7zVE7v.jpeg" },
-  { id: 2, name: 'bruh', likes: '122', dislikes: '3', comments: '10', imageURL: "https://i.imgur.com/I7zVE7v.jpeg" },
-  { id: 3, name: 'kkkk', likes: '125', dislikes: '3', comments: '10', imageURL: "https://i.imgur.com/I7zVE7v.jpeg" },
-  { id: 4, name: 'aoskdpa', likes: '212', dislikes: '3', comments: '10', imageURL: "https://i.imgur.com/I7zVE7v.jpeg" },
-  { id: 5, name: 'somethign', likes: '94', dislikes: '3', comments: '10', imageURL: "https://i.imgur.com/I7zVE7v.jpeg" },
-  { id: 6, name: '已經沒有囉', likes: '10', dislikes: '3', comments: '10', imageURL: "https://i.imgur.com/I7zVE7v.jpeg" },
-  { id: 7, name: '已經沒有囉', likes: '10', dislikes: '3', comments: '10', imageURL: "https://i.imgur.com/I7zVE7v.jpeg" },
-
-];
-
-
-const COMMENTS = [
-  { id: 1, userID: 'player1', itemID: 'kke', content: 'kajhdas', likes: '121', dislikes: '3', comments: '10', imageURL: "https://i.imgur.com/I7zVE7v.jpeg" },
-  { id: 2, userID: 'player2', itemID: 'kke', content: 'bruh', likes: '122', dislikes: '3', comments: '10', imageURL: '../assets/london.png' },
-  { id: 3, userID: 'player3', itemID: 'kke', content: 'kkkk', likes: '125', dislikes: '3', comments: '10', imageURL: '../assets/london.png' },
-  { id: 4, userID: 'player4', itemID: 'kke', content: 'aoskdpa', likes: '212', dislikes: '3', comments: '10', imageURL: "https://i.imgur.com/I7zVE7v.jpeg" },
-  { id: 5, userID: 'player5', itemID: 'kke', content: 'somethignsakdjfhaslfdjhli ishfiush osah ilshdfliauhfl s diufhalsifdusl sdiufhsiu fhsif sid hdiu shfi', likes: '94', dislikes: '3', comments: '10', imageURL: '../assets/london.png' },
-  { id: 6, userID: 'player6', itemID: 'kke', content: '已經沒有囉', likes: '10', dislikes: '3', comments: '10', imageURL: '../assets/london.png' },
-];
 
 var itemList: any = []
-
-
 
 function HotMain({ navigation }: { navigation: any }) {
 
@@ -100,7 +78,6 @@ function HotMain({ navigation }: { navigation: any }) {
             }
             if (childData.comments_disliked_list) {
               let temp = []
-              console.log(childData.comments_disliked_list);
               Object.values(childData.comments_disliked_list).forEach(function (e) {
                 temp.push(e.comment_id);
               })
@@ -124,8 +101,7 @@ function HotMain({ navigation }: { navigation: any }) {
       e.val();
       firebase.database().ref("item_list/" + item.item.id + "/click").set(e.val() + 1);
     });
-    getComment(item.item);
-    navigation.navigate('Item')
+    navigation.navigate('Item', { CurrItem: item })
   };
   const [currUser, setCurrUser] = useState<any>(null);
 
@@ -186,26 +162,6 @@ function HotMain({ navigation }: { navigation: any }) {
 
 
 
-  function getComment(item: any) {
-    let comment_list: any = [];
-    let current_item_comment = firebase.database().ref("item_list/" + item.id + "/comment_list");
-    current_item_comment.once('value').then(
-      function (snapshot) {
-        snapshot.forEach(function (childSnapshot) {
-          var childData = childSnapshot.val();
-          firebase.database().ref("comment_list/" + childData).get().then(
-            function (e) {
-              comment_list.push({ comment_id: e.key, ...e.val() });
-            }
-          );
-        })
-
-      }).then(() => {
-        setCommentRefreshing(false)
-        setItemComments(comment_list);
-      }
-      )
-  }
 
   function fixLayout(somelist: any[]) {
     let temp: any = [];
