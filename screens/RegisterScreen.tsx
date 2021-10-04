@@ -91,7 +91,8 @@ export default function RegisterScreen({ navigation }: { navigation: any }) {
         iosClientId: "1040692554774-6clkoa9ftvif006pgcgchpihb81fsm6i.apps.googleusercontent.com",
         scopes: ['profile', 'email'],
       })
-
+      const credential = firebase.auth.GoogleAuthProvider.credential(result.idToken, result.accessToken);
+      const result2 = await firebase.auth().signInWithCredential(credential)
       if (result.type === 'success') {
         let user_list = firebase.database().ref('user_list');
         var already_exist = false;
@@ -100,7 +101,6 @@ export default function RegisterScreen({ navigation }: { navigation: any }) {
             var childData = childSnapshot.val();
 
             if (childData.email === result.user.email) {
-              alert("此帳號已存在")
               already_exist = true;
             }
           })
@@ -112,7 +112,6 @@ export default function RegisterScreen({ navigation }: { navigation: any }) {
             })
           }
         }).then(() => {
-          navigation.navigate("Main")
         })
         return result.accessToken;
       } else {

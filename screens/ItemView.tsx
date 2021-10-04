@@ -65,7 +65,6 @@ export default function ItemView({ route, navigation }: { route: any, navigation
     }
     getComment(props.item);
     if (outsideUser) {
-      console.log('cp1')
       let user_email = outsideUser.email;
       let user_list = firebase.database().ref('user_list');
       user_list.once('value').then(function (snapshot) {

@@ -59,14 +59,20 @@ function HotMain({ navigation }: { navigation: any }) {
   const [commentsDisLikedList, setCommentsDisLikedList] = useState<string[]>([])
 
   function detectBday() {
+    console.log(currUser)
     if (currUser) {
+      console.log('check2')
       let user_list = firebase.database().ref('user_list');
       user_list.once('value').then(function (snapshot) {
         snapshot.forEach(function (childSnapshot) {
           var childData = childSnapshot.val();
+          console.log('check3')
           if (childData.email == currUser.email) {
+            console.log('check4')
             setDisplayName(childData.displayName)
+            console.log('check5')
             if (!childData.bday || childData.bday == "") {
+              console.log('check6')
               setHasBirthday(false);
             }
             if (childData.comments_liked_list) {
@@ -110,8 +116,6 @@ function HotMain({ navigation }: { navigation: any }) {
   };
 
   useEffect(() => {
-    console.log(firebaseUser)
-
     if (firebaseUser) {
       setCurrUser(firebaseUser);
     } else {
@@ -120,6 +124,7 @@ function HotMain({ navigation }: { navigation: any }) {
   }, []);
 
   useEffect(() => {
+    console.log('asdjak')
     detectBday();
   }, [currUser])
 
@@ -345,7 +350,12 @@ function HotMain({ navigation }: { navigation: any }) {
           if (!childData.bday) {
             let user_data = firebase.database().ref('user_list/' + childSnapshot.key);
             user_data.set({
+              displayname: displayName,
+              email: childData.email,
               bday: bday.toString()
+            })
+            currUser.updateProfile({
+              displayName: displayName
             })
           }
         }
