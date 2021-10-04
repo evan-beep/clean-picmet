@@ -161,6 +161,11 @@ export default function ItemView({ route, navigation }: { route: any, navigation
               e.val();
               firebase.database().ref("comment_list/" + item.item.comment_id + "/likeNum").set(e.val() - 1);
             });
+          }).then(function(){
+            let temp = []
+            temp = commentsLikedList
+            temp.splice(temp.indexOf(item.item.comment_id),1);
+            setCommentsLikedList(temp);
           })
         }
         else if (commentsDisLikedList.includes(item.item.comment_id)) {
@@ -212,7 +217,16 @@ export default function ItemView({ route, navigation }: { route: any, navigation
                 firebase.database().ref("comment_list/" + item.item.comment_id + "/likeNum").set(e.val() + 1);
               });
             })
-          });
+          }).then(function(){
+            let temp = []
+            temp = commentsLikedList
+            temp.push(item.item.comment_id)
+            setCommentsLikedList(temp)
+            let temp2 = []
+            temp2 = commentsDisLikedList
+            temp2.splice(temp2.indexOf(item.item.comment_id),1);
+            setCommentsDisLikedList(temp2)
+          })
         }
         else {
           comment_like_userlist.push({ email: user_email }).then(function () {
@@ -232,9 +246,15 @@ export default function ItemView({ route, navigation }: { route: any, navigation
                 firebase.database().ref("comment_list/" + item.item.comment_id + "/likeNum").set(e.val() + 1);
               });
             })
+          }).then(function(){
+            let temp = []
+            temp = commentsLikedList
+            temp.push(item.item.comment_id)
+            setCommentsLikedList(temp)
           });
         }
       }
+
     }
     function commentDislike() {
       if (currUser) {
@@ -275,6 +295,11 @@ export default function ItemView({ route, navigation }: { route: any, navigation
               e.val();
               firebase.database().ref("comment_list/" + item.item.comment_id + "/dislikeNum").set(e.val() - 1);
             });
+          }).then(function(){
+            let temp = []
+            temp = commentsDisLikedList
+            temp.splice(temp.indexOf(item.item.comment_id),1);
+            setCommentsDisLikedList(temp);
           })
         }
         else if (commentsLikedList.includes(item.item.comment_id)) {
@@ -282,7 +307,7 @@ export default function ItemView({ route, navigation }: { route: any, navigation
             snapshot.forEach(function (childSnapshot) {
               let email = childSnapshot.val().email;
               if (email == user_email)
-                firebase.database().ref('comment_list/' + item.item.comment_id + "/dislike_userlist/" + childSnapshot.key).remove();
+                firebase.database().ref('comment_list/' + item.item.comment_id + "/like_userlist/" + childSnapshot.key).remove();
             })
           }).then(function () {
             user_list.once('value').then(function (snapshot) {
@@ -324,6 +349,15 @@ export default function ItemView({ route, navigation }: { route: any, navigation
                 e.val();
                 firebase.database().ref("comment_list/" + item.item.comment_id + "/dislikeNum").set(e.val() + 1);
               });
+            }).then(function(){
+              let temp = []
+              temp = commentsDisLikedList
+              temp.push(item.item.comment_id)
+              setCommentsDisLikedList(temp)
+              let temp2 = []
+              temp2 = commentsLikedList
+              temp2.splice(temp2.indexOf(item.item.comment_id),1);
+              setCommentsLikedList(temp2)
             })
           });
         }
@@ -345,6 +379,11 @@ export default function ItemView({ route, navigation }: { route: any, navigation
                 firebase.database().ref("comment_list/" + item.item.comment_id + "/dislikeNum").set(e.val() + 1);
               });
             })
+          }).then(function(){
+            let temp = []
+            temp = commentsDisLikedList
+            temp.push(item.item.comment_id)
+            setCommentsDisLikedList(temp)
           });
         }
       }
