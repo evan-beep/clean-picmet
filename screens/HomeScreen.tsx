@@ -31,12 +31,6 @@ if (!firebase.apps.length) {
 
 export default function HomeScreen({ navigation }: { navigation: any }) {
 
-  firebase.auth().onAuthStateChanged(user => {
-
-    if (user) navigation.navigate('Main')
-  });
-
-
   return (
     <View style={styles.container}>
       <Image
