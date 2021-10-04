@@ -110,6 +110,8 @@ function HotMain({ navigation }: { navigation: any }) {
   };
 
   useEffect(() => {
+    console.log(firebaseUser)
+
     if (firebaseUser) {
       setCurrUser(firebaseUser);
     } else {

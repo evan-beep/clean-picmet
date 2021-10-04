@@ -98,19 +98,22 @@ export default function RegisterScreen({ navigation }: { navigation: any }) {
         user_list.once('value').then(function (snapshot) {
           snapshot.forEach(function (childSnapshot) {
             var childData = childSnapshot.val();
-            if (childData.email == result.user.email) {
+
+            if (childData.email === result.user.email) {
               alert("此帳號已存在")
               already_exist = true;
             }
           })
+        }).then(() => {
+          if (already_exist === false) {
+            firebase.database().ref("user_list").push({
+              email: result.user.email,
+              displayname: result.user.name,
+            })
+          }
+        }).then(() => {
+          navigation.navigate("Main")
         })
-        if (already_exist === false) {
-          firebase.database().ref("user_list").push({
-            email: result.user.email,
-            displayname: result.user.name,
-          })
-
-        }
         return result.accessToken;
       } else {
         return { cancelled: true };
