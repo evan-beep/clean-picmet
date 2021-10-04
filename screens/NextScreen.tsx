@@ -106,7 +106,7 @@ function HotMain({ navigation }: { navigation: any }) {
       e.val();
       firebase.database().ref("item_list/" + item.item.id + "/click").set(e.val() + 1);
     });
-    navigation.push('Item', { CurrItem: item, OutsideUser: currUser })
+    navigation.push('Item', { CurrItem: item, OutsideUser: currUser, CommentDislikeList: commentsDisLikedList, CommentLikeList: commentsLikedList })
   };
 
   useEffect(() => {

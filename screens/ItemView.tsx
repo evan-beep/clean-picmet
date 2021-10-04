@@ -39,15 +39,16 @@ export default function ItemView({ route, navigation }: { route: any, navigation
 
   const props = route.params.CurrItem
   const outsideUser = route.params.OutsideUser
-
+  const commentLikes = route.params.CommentLikeList
+  const commentDislikes = route.params.CommentDislikeList
 
   const [itemComments, setItemComments] = useState<any[]>([]);
   const [commentRefreshing, setCommentRefreshing] = useState(false)
   const [myComment, setMyComment] = useState('');
   const [currUser, setCurrUser] = useState<any>(null);
 
-  const [commentsLikedList, setCommentsLikedList] = useState<string[]>([])
-  const [commentsDisLikedList, setCommentsDisLikedList] = useState<string[]>([])
+  const [commentsLikedList, setCommentsLikedList] = useState(commentLikes)
+  const [commentsDisLikedList, setCommentsDisLikedList] = useState(commentDislikes)
   const [currItem, setCurrItem] = React.useState(props.item);
   const [currImage, setCurrImage] = useState(props.item.photourl);
   const [likeOrDis, setLikeOrDis] = useState('none');
@@ -57,7 +58,6 @@ export default function ItemView({ route, navigation }: { route: any, navigation
   const firebaseUser = firebase.auth().currentUser;
 
   useEffect(() => {
-    console.log(outsideUser)
     if (firebaseUser) {
       setCurrUser(firebaseUser);
     } else {
@@ -160,10 +160,10 @@ export default function ItemView({ route, navigation }: { route: any, navigation
               e.val();
               firebase.database().ref("comment_list/" + item.item.comment_id + "/likeNum").set(e.val() - 1);
             });
-          }).then(function(){
+          }).then(function () {
             let temp = []
             temp = commentsLikedList
-            temp.splice(temp.indexOf(item.item.comment_id),1);
+            temp.splice(temp.indexOf(item.item.comment_id), 1);
             setCommentsLikedList(temp);
           })
         }
@@ -216,14 +216,14 @@ export default function ItemView({ route, navigation }: { route: any, navigation
                 firebase.database().ref("comment_list/" + item.item.comment_id + "/likeNum").set(e.val() + 1);
               });
             })
-          }).then(function(){
+          }).then(function () {
             let temp = []
             temp = commentsLikedList
             temp.push(item.item.comment_id)
             setCommentsLikedList(temp)
             let temp2 = []
             temp2 = commentsDisLikedList
-            temp2.splice(temp2.indexOf(item.item.comment_id),1);
+            temp2.splice(temp2.indexOf(item.item.comment_id), 1);
             setCommentsDisLikedList(temp2)
           })
         }
@@ -245,7 +245,7 @@ export default function ItemView({ route, navigation }: { route: any, navigation
                 firebase.database().ref("comment_list/" + item.item.comment_id + "/likeNum").set(e.val() + 1);
               });
             })
-          }).then(function(){
+          }).then(function () {
             let temp = []
             temp = commentsLikedList
             temp.push(item.item.comment_id)
@@ -294,10 +294,10 @@ export default function ItemView({ route, navigation }: { route: any, navigation
               e.val();
               firebase.database().ref("comment_list/" + item.item.comment_id + "/dislikeNum").set(e.val() - 1);
             });
-          }).then(function(){
+          }).then(function () {
             let temp = []
             temp = commentsDisLikedList
-            temp.splice(temp.indexOf(item.item.comment_id),1);
+            temp.splice(temp.indexOf(item.item.comment_id), 1);
             setCommentsDisLikedList(temp);
           })
         }
@@ -348,14 +348,14 @@ export default function ItemView({ route, navigation }: { route: any, navigation
                 e.val();
                 firebase.database().ref("comment_list/" + item.item.comment_id + "/dislikeNum").set(e.val() + 1);
               });
-            }).then(function(){
+            }).then(function () {
               let temp = []
               temp = commentsDisLikedList
               temp.push(item.item.comment_id)
               setCommentsDisLikedList(temp)
               let temp2 = []
               temp2 = commentsLikedList
-              temp2.splice(temp2.indexOf(item.item.comment_id),1);
+              temp2.splice(temp2.indexOf(item.item.comment_id), 1);
               setCommentsLikedList(temp2)
             })
           });
@@ -378,7 +378,7 @@ export default function ItemView({ route, navigation }: { route: any, navigation
                 firebase.database().ref("comment_list/" + item.item.comment_id + "/dislikeNum").set(e.val() + 1);
               });
             })
-          }).then(function(){
+          }).then(function () {
             let temp = []
             temp = commentsDisLikedList
             temp.push(item.item.comment_id)
