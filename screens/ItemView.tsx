@@ -2,7 +2,7 @@ import * as React from 'react';
 import { useEffect, useState } from 'react';
 import { View, Button, TouchableOpacity, Image, StyleSheet, TextInput, FlatList, Platform, KeyboardAvoidingView, Appearance } from 'react-native';
 
-import { Modal, Portal, Provider, Text } from 'react-native-paper';
+import { Text } from 'react-native-paper';
 
 import firebase from 'firebase/app'
 
@@ -38,7 +38,7 @@ if (!firebase.apps.length) {
 export default function ItemView({ route, navigation }: { route: any, navigation: any }) {
 
   const props = route.params.CurrItem
-  const liked = route.params.Liked
+  const outsideUser = route.params.OutsideUser
 
 
   const [itemComments, setItemComments] = useState<any[]>([]);
@@ -57,14 +57,16 @@ export default function ItemView({ route, navigation }: { route: any, navigation
   const firebaseUser = firebase.auth().currentUser;
 
   useEffect(() => {
+    console.log(outsideUser)
     if (firebaseUser) {
       setCurrUser(firebaseUser);
     } else {
-      setCurrUser(null)
+      setCurrUser(outsideUser)
     }
     getComment(props.item);
-    if (currUser) {
-      let user_email = currUser.email;
+    if (outsideUser) {
+      console.log('cp1')
+      let user_email = outsideUser.email;
       let user_list = firebase.database().ref('user_list');
       user_list.once('value').then(function (snapshot) {
         snapshot.forEach(function (childSnapshot) {
@@ -117,9 +119,6 @@ export default function ItemView({ route, navigation }: { route: any, navigation
 
   }, []);
 
-  useEffect(() => {
-    console.log(likeOrDis)
-  }, [likeOrDis])
 
   const CommentContainer = (item: any) => {
     function commentLike() {

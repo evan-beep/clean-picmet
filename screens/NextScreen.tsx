@@ -90,6 +90,11 @@ function HotMain({ navigation }: { navigation: any }) {
   }
 
 
+
+  const [currUser, setCurrUser] = useState<any>(null);
+
+  const firebaseUser = firebase.auth().currentUser;
+
   const showModal = (item: any) => {
     setCurrItem(item.item)
     if (currImage !== item.item.photourl) {
@@ -101,11 +106,8 @@ function HotMain({ navigation }: { navigation: any }) {
       e.val();
       firebase.database().ref("item_list/" + item.item.id + "/click").set(e.val() + 1);
     });
-    navigation.navigate('Item', { CurrItem: item })
+    navigation.push('Item', { CurrItem: item, OutsideUser: currUser })
   };
-  const [currUser, setCurrUser] = useState<any>(null);
-
-  const firebaseUser = firebase.auth().currentUser;
 
   useEffect(() => {
     if (firebaseUser) {
