@@ -112,7 +112,7 @@ export default function RegisterScreen({ navigation }: { navigation: any }) {
             })
           }
         }).then(() => {
-          navigation.navigate('Main')
+          navigation.push('Main')
         })
         return result.accessToken;
       } else {

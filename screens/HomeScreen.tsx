@@ -49,17 +49,17 @@ export default function HomeScreen({ navigation }: { navigation: any }) {
           source={require('../assets/slogan.png')} />
       </View>
       <View style={styles.buttonContainer}>
-        <TouchableOpacity onPress={false ? () => { } : () => navigation.navigate('Login')}>
+        <TouchableOpacity onPress={false ? () => { } : () => navigation.push('Login')}>
           <Image
             style={styles.button}
             source={require('../assets/loginButton.png')} />
         </TouchableOpacity>
-        <TouchableOpacity onPress={false ? () => { } : () => navigation.navigate('Register')}>
+        <TouchableOpacity onPress={false ? () => { } : () => navigation.push('Register')}>
           <Image
             style={styles.button}
             source={require('../assets/registerButton.png')} />
         </TouchableOpacity>
-        <TouchableOpacity onPress={false ? () => { } : () => navigation.navigate('Main')}>
+        <TouchableOpacity onPress={false ? () => { } : () => navigation.push('Main')}>
           <Image
             style={styles.button}
             source={require('../assets/noAccountButton.png')} />

@@ -64,7 +64,7 @@ export default function LoginScreen({ navigation }: { navigation: any }) {
   return (
     <View style={styles.container}>
       <View style={styles.topContainer}>
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.push('Home')}>
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.navigate('Home')}>
           <Image
             style={[styles.backButton, { resizeMode: 'contain' }]}
             source={require('../assets/backarrow.png')} />
