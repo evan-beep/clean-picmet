@@ -10,6 +10,8 @@ import "firebase/database";
 //import "firebase/firestore";
 //import "firebase/functions";
 import "firebase/storage";
+import { NavigationRouteContext } from '@react-navigation/core';
+import { useEffect } from 'react';
 
 // Initialize Firebase
 var firebaseConfig = {
@@ -29,8 +31,15 @@ if (!firebase.apps.length) {
   firebase.app(); // if already initialized, use that one
 }
 
+
 export default function HomeScreen({ navigation }: { navigation: any }) {
 
+  useEffect(() => {
+    let firebaseUser = firebase.auth().currentUser;
+    if (firebaseUser) {
+      navigation.push('Main')
+    }
+  }, [])
   return (
     <View style={styles.container}>
       <Image

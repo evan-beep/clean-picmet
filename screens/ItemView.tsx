@@ -42,7 +42,7 @@ export default function ItemView({ route, navigation }: { route: any, navigation
   const commentLikes = route.params.CommentLikeList
   const commentDislikes = route.params.CommentDislikeList
 
-  const [itemComments, setItemComments] = useState<any[]>([]);
+  const [itemComments, setItemComments] = useState<any[]>([{ comment_id: 'null0' }]);
   const [commentRefreshing, setCommentRefreshing] = useState(false)
   const [myComment, setMyComment] = useState('');
   const [currUser, setCurrUser] = useState<any>(null);
@@ -53,7 +53,7 @@ export default function ItemView({ route, navigation }: { route: any, navigation
   const [currImage, setCurrImage] = useState(props.item.photourl);
   const [likeOrDis, setLikeOrDis] = useState('none');
   const [is_favorite, setIs_favorite] = useState(false);
-
+  const [commentLikeUpdate, setCommentlikeUpdate] = useState(false)
 
   const firebaseUser = firebase.auth().currentUser;
 
@@ -163,7 +163,7 @@ export default function ItemView({ route, navigation }: { route: any, navigation
             let temp = []
             temp = commentsLikedList
             temp.splice(temp.indexOf(item.item.comment_id), 1);
-            setCommentsLikedList(temp);
+            //setCommentsLikedList(temp);
           })
         }
         else if (commentsDisLikedList.includes(item.item.comment_id)) {
@@ -219,11 +219,11 @@ export default function ItemView({ route, navigation }: { route: any, navigation
             let temp = []
             temp = commentsLikedList
             temp.push(item.item.comment_id)
-            setCommentsLikedList(temp)
+            //setCommentsLikedList(temp)
             let temp2 = []
             temp2 = commentsDisLikedList
             temp2.splice(temp2.indexOf(item.item.comment_id), 1);
-            setCommentsDisLikedList(temp2)
+            //setCommentsDisLikedList(temp2)
           })
         }
         else {
@@ -248,7 +248,7 @@ export default function ItemView({ route, navigation }: { route: any, navigation
             let temp = []
             temp = commentsLikedList
             temp.push(item.item.comment_id)
-            setCommentsLikedList(temp)
+            //setCommentsLikedList(temp)
           });
         }
       }
@@ -297,7 +297,7 @@ export default function ItemView({ route, navigation }: { route: any, navigation
             let temp = []
             temp = commentsDisLikedList
             temp.splice(temp.indexOf(item.item.comment_id), 1);
-            setCommentsDisLikedList(temp);
+            //setCommentsDisLikedList(temp);
           })
         }
         else if (commentsLikedList.includes(item.item.comment_id)) {
@@ -351,11 +351,11 @@ export default function ItemView({ route, navigation }: { route: any, navigation
               let temp = []
               temp = commentsDisLikedList
               temp.push(item.item.comment_id)
-              setCommentsDisLikedList(temp)
+              //setCommentsDisLikedList(temp)
               let temp2 = []
               temp2 = commentsLikedList
               temp2.splice(temp2.indexOf(item.item.comment_id), 1);
-              setCommentsLikedList(temp2)
+              //setCommentsLikedList(temp2)
             })
           });
         }
@@ -381,79 +381,126 @@ export default function ItemView({ route, navigation }: { route: any, navigation
             let temp = []
             temp = commentsDisLikedList
             temp.push(item.item.comment_id)
-            setCommentsDisLikedList(temp)
+            //setCommentsDisLikedList(temp)
           });
         }
       }
     }
 
-    let likeStat = 'none';
-    if (commentsLikedList.includes(item.item.comment_id)) {
-      likeStat = 'liked'
-    } else if (commentsDisLikedList.includes(item.item.comment_id)) {
-      likeStat = 'dislike'
-    } else {
-      likeStat = 'none'
+    function localLikesChange() {
+      let id = item.item.comment_id
+      if (commentsLikedList.includes(id)) {
+        let temp = []
+        temp = commentsLikedList
+        temp.splice(temp.indexOf(id) + 1, 1);
+        setCommentsLikedList(temp);
+      } else if (commentsDisLikedList.includes(id)) {
+        let temp = []
+        temp = commentsLikedList
+        temp.push(id)
+        setCommentsLikedList(temp)
+        let temp2 = []
+        temp2 = commentsDisLikedList
+        temp2.splice(temp2.indexOf(id) + 1, 1);
+        setCommentsDisLikedList(temp2)
+      } else {
+        let temp = []
+        temp = commentsLikedList
+        temp.push(id)
+        setCommentsLikedList(temp)
+      }
+      setCommentlikeUpdate(!commentLikeUpdate)
+
+    }
+
+    function localDisLikesChange() {
+      let id = item.item.comment_id
+      if (commentsLikedList.includes(id)) {
+        let temp = []
+        temp = commentsDisLikedList
+        temp.push(item.item.comment_id)
+        setCommentsDisLikedList(temp)
+        let temp2 = []
+        temp2 = commentsLikedList
+        temp2.splice(temp2.indexOf(item.item.comment_id) + 1, 1);
+        setCommentsLikedList(temp2)
+      } else if (commentsDisLikedList.includes(id)) {
+        let temp = []
+        temp = commentsDisLikedList
+        temp.splice(temp.indexOf(item.item.comment_id) + 1, 1);
+        setCommentsDisLikedList(temp);
+      } else {
+        let temp = []
+        temp = commentsDisLikedList
+        temp.push(item.item.comment_id)
+        setCommentsDisLikedList(temp)
+      }
+      setCommentlikeUpdate(!commentLikeUpdate)
     }
 
     return (
-      <View style={styles.commentContainer}>
-        <View style={{ height: 90, display: 'flex', justifyContent: 'flex-start', alignItems: 'flex-start' }}>
-          <View style={{ height: 50, width: 50, marginLeft: 10 }}>
-            <Image
-              style={{ width: 50, height: 50, resizeMode: 'contain', flex: 1 }}
-              source={require('../assets/account_default.png')}
-            />
-          </View>
+      item.item.comment_id == 'null0' ?
+        <View>
 
         </View>
-        <View style={{ display: 'flex', flexGrow: 6, flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-          <View style={{ minHeight: 80, width: '90%', backgroundColor: '#00C7DC', borderRadius: 10, alignItems: 'center', justifyContent: 'space-between' }}>
-            <View style={{ height: 30, width: '90%', marginTop: 10 }}>
-              <Text style={{ fontSize: 18, color: 'white', fontWeight: '500' }}>
-                {item.item.name} 說：
-              </Text>
+        :
+        <View style={styles.commentContainer}>
+          <View style={{ height: 90, display: 'flex', justifyContent: 'flex-start', alignItems: 'flex-start' }}>
+            <View style={{ height: 50, width: 50, marginLeft: 10 }}>
+              <Image
+                style={{ width: 50, height: 50, resizeMode: 'contain', flex: 1 }}
+                source={require('../assets/account_default.png')}
+              />
             </View>
-            <View style={{ width: '90%' }}>
-              <Text style={{ fontSize: 18, color: 'white', fontWeight: '500' }}>{item.item.content}</Text>
-            </View>
-            <View style={{ height: 30, width: '100%', justifyContent: 'flex-end', marginBottom: 5 }}>
-              <View style={{ display: 'flex', flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'flex-end' }}>
-                <View style={{ flex: 2 }}>
 
+          </View>
+          <View style={{ display: 'flex', flexGrow: 6, flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+            <View style={{ minHeight: 80, width: '90%', backgroundColor: '#00C7DC', borderRadius: 10, alignItems: 'center', justifyContent: 'space-between' }}>
+              <View style={{ height: 30, width: '90%', marginTop: 10 }}>
+                <Text style={{ fontSize: 18, color: 'white', fontWeight: '500' }}>
+                  {item.item.name} 說：
+                </Text>
+              </View>
+              <View style={{ width: '90%' }}>
+                <Text style={{ fontSize: 18, color: 'white', fontWeight: '500' }}>{item.item.content}</Text>
+              </View>
+              <View style={{ height: 30, width: '100%', justifyContent: 'flex-end', marginBottom: 5 }}>
+                <View style={{ display: 'flex', flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'flex-end' }}>
+                  <View style={{ flex: 2 }}>
+
+                  </View>
+                  <TouchableOpacity
+                    onPress={() => { commentLike(); localLikesChange() }}
+                    style={styles.likes}>
+                    <View style={{ marginRight: 5, width: 20, height: 20 }}>
+                      <Image
+                        source={commentsLikedList.includes(item.item.comment_id) ? require('../assets/like_filled.png') : require('../assets/like.png')}
+                        style={{ width: 20, height: 20, resizeMode: 'contain' }}
+                      />
+                    </View>
+                    <Text style={styles.likeTXT}>
+                      {"" + commentsLikedList.includes(item.item.comment_id)}
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() => { commentDislike(); localDisLikesChange() }}
+                    style={styles.likes}>
+                    <View style={{ marginRight: 5, width: 20, height: 20 }}>
+                      <Image
+                        source={commentsDisLikedList.includes(item.item.comment_id) ? require('../assets/dislike_filled.png') : require('../assets/dislike.png')}
+                        style={{ width: 20, height: 20, resizeMode: 'contain' }}
+                      />
+                    </View>
+
+                    <Text style={styles.likeTXT}>
+                      {"" + commentsDisLikedList.includes(item.item.comment_id)}
+                    </Text>
+                  </TouchableOpacity>
                 </View>
-                <TouchableOpacity
-                  onPress={() => { commentLike() }}
-                  style={styles.likes}>
-                  <View style={{ marginRight: 5, width: 20, height: 20 }}>
-                    <Image
-                      source={require('../assets/like.png')}
-                      style={{ width: 20, height: 20, resizeMode: 'contain' }}
-                    />
-                  </View>
-                  <Text style={styles.likeTXT}>
-                    {item.item.likes}
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  onPress={commentDislike}
-                  style={styles.likes}>
-                  <View style={{ marginRight: 5, width: 20, height: 20 }}>
-                    <Image
-                      source={require('../assets/dislike.png')}
-                      style={{ width: 20, height: 20, resizeMode: 'contain' }}
-                    />
-                  </View>
-
-                  <Text style={styles.likeTXT}>
-                    {item.item.dislikes}
-                  </Text>
-                </TouchableOpacity>
               </View>
             </View>
           </View>
         </View>
-      </View>
     )
   }
 
@@ -642,7 +689,7 @@ export default function ItemView({ route, navigation }: { route: any, navigation
 
 
   function getComment(item: any) {
-    let comment_list: any = [];
+    console.log(itemComments)
     let current_item_comment = firebase.database().ref("item_list/" + item.id + "/comment_list");
     current_item_comment.once('value').then(
       function (snapshot) {
@@ -650,14 +697,20 @@ export default function ItemView({ route, navigation }: { route: any, navigation
           var childData = childSnapshot.val();
           firebase.database().ref("comment_list/" + childData).get().then(
             function (e) {
-              comment_list.push({ comment_id: e.key, ...e.val() });
+              let dupe = itemComments
+              let newItem = { comment_id: e.key, ...e.val() }
+              if (dupe.filter(k => k.comment_id == e.key).length <= 0) {
+                console.log('hmm')
+                dupe.push(newItem);
+              }
+              setItemComments(dupe)
+              console.log(itemComments)
             }
           );
         })
 
       }).then(() => {
         setCommentRefreshing(false)
-        setItemComments(comment_list);
       }
       )
   }
@@ -756,6 +809,7 @@ export default function ItemView({ route, navigation }: { route: any, navigation
           </View>
           <View style={styles.flatList}>
             <FlatList
+              key={itemComments.length}
               data={itemComments}
               keyExtractor={item => item.comment_id.toString()}
               renderItem={CommentContainer}
@@ -766,7 +820,7 @@ export default function ItemView({ route, navigation }: { route: any, navigation
               contentContainerStyle={{
                 paddingBottom: 200
               }}
-              extraData={itemComments}
+              extraData={commentLikeUpdate}
             />
           </View>
           <View style={{ position: 'absolute', bottom: 0, height: 100, width: '100%', backgroundColor: '#7CAEDE', display: 'flex', flexDirection: 'row' }}>
