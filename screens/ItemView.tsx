@@ -689,7 +689,6 @@ export default function ItemView({ route, navigation }: { route: any, navigation
 
 
   function getComment(item: any) {
-    console.log(itemComments)
     let current_item_comment = firebase.database().ref("item_list/" + item.id + "/comment_list");
     current_item_comment.once('value').then(
       function (snapshot) {
@@ -700,11 +699,9 @@ export default function ItemView({ route, navigation }: { route: any, navigation
               let dupe = itemComments
               let newItem = { comment_id: e.key, ...e.val() }
               if (dupe.filter(k => k.comment_id == e.key).length <= 0) {
-                console.log('hmm')
                 dupe.push(newItem);
               }
               setItemComments(dupe)
-              console.log(itemComments)
             }
           );
         })
@@ -799,7 +796,7 @@ export default function ItemView({ route, navigation }: { route: any, navigation
         <View style={{ height: '100%', width: '100%', backgroundColor: '#DE75BE', alignItems: 'center', justifyContent: 'flex-start' }}>
           <View style={[styles.topContainer,]}>
             <TouchableOpacity style={styles.backButton} onPress={() => {
-              navigation.navigate('HotMain')
+              navigation.goBack()
               setLikeOrDis('none')
             }}>
               <Image

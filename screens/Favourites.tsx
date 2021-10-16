@@ -1,55 +1,256 @@
 import * as React from 'react';
-import { useState } from 'react';
-import { Dimensions } from 'react-native';
-import { View, Button, TouchableOpacity, StyleSheet, TextInput, Image, FlatList, Platform, KeyboardAvoidingView } from 'react-native';
+import { useEffect, useState } from 'react';
+import { View, Button, TouchableOpacity, Image, StyleSheet, TextInput, FlatList, Platform, KeyboardAvoidingView, Appearance, Dimensions } from 'react-native';
+
+import { createDrawerNavigator } from '@react-navigation/drawer';
+import { NavigationContainer } from '@react-navigation/native';
+import { DrawerMenu, } from './DrawerMenu';
+import DateTimePickerModal from "react-native-modal-datetime-picker";
+
 import { Modal, Portal, Provider, Text } from 'react-native-paper';
 
+import firebase from 'firebase/app'
 
-const DATA = [
-  { id: 1, name: 'kajhdas', likes: '121', dislikes: '3', comments: '10', imageURL: "https://i.imgur.com/I7zVE7v.jpeg" },
-  { id: 2, name: 'bruh', likes: '122', dislikes: '3', comments: '10', imageURL: "https://i.imgur.com/I7zVE7v.jpeg" },
-  { id: 3, name: 'kkkk', likes: '125', dislikes: '3', comments: '10', imageURL: "https://i.imgur.com/I7zVE7v.jpeg" },
-  { id: 4, name: 'aoskdpa', likes: '212', dislikes: '3', comments: '10', imageURL: "https://i.imgur.com/I7zVE7v.jpeg" },
-  { id: 5, name: 'somethign', likes: '94', dislikes: '3', comments: '10', imageURL: "https://i.imgur.com/I7zVE7v.jpeg" },
-  { id: 6, name: 'chekc', likes: '10', dislikes: '3', comments: '10', imageURL: "https://i.imgur.com/I7zVE7v.jpeg" },
-  { id: 7, name: '已經沒有囉', likes: '10', dislikes: '3', comments: '10', imageURL: "https://i.imgur.com/I7zVE7v.jpeg" },
+// Optionally import the services that you want to use
+import "firebase/auth";
+import "firebase/database";
+//import "firebase/firestore";
+//import "firebase/functions";
+import "firebase/storage";
+import { Alert } from 'react-native';
+import { createStackNavigator } from '@react-navigation/stack';
+import ItemView from './ItemView';
 
-];
+// Initialize Firebase
+var firebaseConfig = {
+  apiKey: "AIzaSyC4sYfz1pRXlf1AobgQ69aDMzw3F3imGQo",
+  authDomain: "picmet-app.firebaseapp.com",
+  databaseURL: "https://picmet-app-default-rtdb.firebaseio.com",
+  projectId: "picmet-app",
+  storageBucket: "picmet-app.appspot.com",
+  messagingSenderId: "1040692554774",
+  appId: "1:1040692554774:web:ae603f95751b34ae465937",
+  measurementId: "G-8RNR9L5QHF"
+};
 
-const COMMENTS = [
-  { id: 1, userID: 'player1', itemID: 'kke', content: 'kajhdas', likes: '121', dislikes: '3', comments: '10', imageURL: "https://i.imgur.com/I7zVE7v.jpeg" },
-  { id: 2, userID: 'player2', itemID: 'kke', content: 'bruh', likes: '122', dislikes: '3', comments: '10', imageURL: '../assets/london.png' },
-  { id: 3, userID: 'player3', itemID: 'kke', content: 'kkkk', likes: '125', dislikes: '3', comments: '10', imageURL: '../assets/london.png' },
-  { id: 4, userID: 'player4', itemID: 'kke', content: 'aoskdpa', likes: '212', dislikes: '3', comments: '10', imageURL: "https://i.imgur.com/I7zVE7v.jpeg" },
-  { id: 5, userID: 'player5', itemID: 'kke', content: 'somethignsakdjfhaslfdjhli ishfiush osah ilshdfliauhfl s diufhalsifdusl sdiufhsiu fhsif sid hdiu shfi', likes: '94', dislikes: '3', comments: '10', imageURL: '../assets/london.png' },
-  { id: 6, userID: 'player6', itemID: 'kke', content: '已經沒有囉', likes: '10', dislikes: '3', comments: '10', imageURL: '../assets/london.png' },
-];
+if (!firebase.apps.length) {
+  firebase.initializeApp(firebaseConfig);
+} else {
+  firebase.app(); // if already initialized, use that one
+}
+
+const Drawer = createDrawerNavigator();
+
+
+var itemList: any = []
+
+function FavPage({ navigation }: { navigation: any }) {
+
+  useEffect(getItem, []);
+
+  const [currImage, setCurrImage] = useState('https://imgur.com/bPYmREY');
+  const [currItem, setCurrItem] = React.useState(null);
+
+  const [commentsLikedList, setCommentsLikedList] = useState<string[]>([])
+  const [commentsDisLikedList, setCommentsDisLikedList] = useState<string[]>([])
+
+  function detectBday() {
+    if (currUser) {
+      let user_list = firebase.database().ref('user_list');
+      user_list.once('value').then(function (snapshot) {
+        snapshot.forEach(function (childSnapshot) {
+          var childData = childSnapshot.val();
+          if (childData.email == currUser.email) {
+            setDisplayName(childData.displayName)
+            if (!childData.bday || childData.bday == "") {
+              setHasBirthday(false);
+            }
+            if (childData.comments_liked_list) {
+              let temp = []
+              Object.values(childData.comments_liked_list).forEach(function (e) {
+                temp.push(e.comment_id);
+              })
+              setCommentsLikedList(temp)
+            }
+            if (childData.comments_disliked_list) {
+              let temp = []
+              Object.values(childData.comments_disliked_list).forEach(function (e) {
+                temp.push(e.comment_id);
+              })
+              setCommentsDisLikedList(temp)
+            }
+          }
+        })
+      })
+    }
+  }
 
 
 
+  const [currUser, setCurrUser] = useState<any>(null);
 
-export default function Favourites({ navigation }: { navigation: any }) {
+  const firebaseUser = firebase.auth().currentUser;
+
   const showModal = (item: any) => {
-    setCurrItem(item.item.name)
+    setCurrItem(item.item)
+    if (currImage !== item.item.photourl) {
+      setCurrImage('https://firebasestorage.googleapis.com/v0/b/picmet-app.appspot.com/o/photo%2Ftest1?alt=media&token=64634594-1188-47ba-9e74-aa816f53ce3a')
+    }
+
     setVisible(true);
+    firebase.database().ref("item_list/" + item.item.id + "/click").get().then(function (e) {
+      e.val();
+      firebase.database().ref("item_list/" + item.item.id + "/click").set(e.val() + 1);
+    });
+    navigation.push('Item', { CurrItem: item, OutsideUser: currUser, CommentDislikeList: commentsDisLikedList, CommentLikeList: commentsLikedList })
   };
-  const hideModal = () => setVisible(false);
+
+  useEffect(() => {
+    if (firebaseUser) {
+      setCurrUser(firebaseUser);
+    } else {
+      setCurrUser(null)
+    }
+  }, []);
+
+  useEffect(() => {
+    detectBday();
+  }, [currUser])
+
   const [visible, setVisible] = React.useState(false);
   const [searchQuery, setSearchQuery] = useState<string>('');
-  const [currItem, setCurrItem] = React.useState('Surface Pro 7');
+
+  const [hotMainItems, setHotMainItems] = useState<any>([]);
+
+  const [hasBirthday, setHasBirthday] = useState(true);
+
   const [myComment, setMyComment] = useState('');
+  const [likeOrDis, setLikeOrDis] = useState('None');
+
+  const [bday, setBday] = useState(null);
+  const [displayName, setDisplayName] = useState('');
+  const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
+  const [darkMode, setDarkMode] = useState(false);
+  const [is_favorite, setIs_favorite] = useState(false);
 
 
+  const [itemRefreshing, setItemRefreshing] = useState(false)
 
-
-  function removeFromFavourites() {
-
+  function onItemRefresh() {
+    setItemRefreshing(true)
+    getItem()
   }
+  useEffect(() => {
+    setDarkMode(Appearance.getColorScheme() === 'dark');
+  }, [])
+
+
+  const showDatePicker = () => {
+    setDatePickerVisibility(true);
+  };
+
+  const hideDatePicker = () => {
+    setDatePickerVisibility(false);
+  };
+
+  const handleConfirm = (date: any) => {
+    setBday(date);
+    hideDatePicker();
+  };
+
+
+
+
+  function fixLayout(somelist: any[]) {
+    let temp: any = [];
+    temp = somelist;
+    if (somelist.length % 2 !== 0) {
+      temp.push({ id: 'yobros', name: 'empty', likes: '', dislikes: '', comments: '', imageURL: "" });
+      setHotMainItems(temp);
+    } else {
+      setHotMainItems(temp);
+    }
+  }
+
+
+
+
+  function getItem() {
+
+    firebase.database().ref("item_list").once('value').then(
+      function (snapshot) {
+        snapshot.forEach(function (childSnapshot) {
+          var itemkey = childSnapshot.val();
+          itemList.push({ id: childSnapshot.key, ...itemkey });
+        })
+      }).then(
+        () => {
+          setItemRefreshing(false)
+          fixLayout(itemList);
+          itemList = [];
+        }
+      )
+  }
+
 
   const renderItem = (item: any) => {
     return (
       <TouchableOpacity
-        onPress={() => showModal(item)}
+        onPress={() => {
+          if (currUser) {
+            let user_email = currUser.email;
+            let user_list = firebase.database().ref('user_list');
+            user_list.once('value').then(function (snapshot) {
+              snapshot.forEach(function (childSnapshot) {
+                var childData = childSnapshot.val();
+                if (childData.email == user_email) {
+                  let user_favorite_list = firebase.database().ref('user_list/' + childSnapshot.key + "/favorite_list");
+                  let user_liked_list = firebase.database().ref('user_list/' + childSnapshot.key + '/liked_list');
+                  let user_disliked_list = firebase.database().ref('user_list/' + childSnapshot.key + '/disliked_list');
+                  user_favorite_list.once('value').then(function (s) {
+                    s.forEach(function (c) {
+                      let itemID = c.val().itemID;
+                      if (itemID == item.item.id) {
+                        setIs_favorite(true);
+                      }
+                    })
+                  })
+                  user_liked_list.once('value').then(function (s) {
+                    s.forEach(function (c) {
+                      let itemID = c.val().itemID;
+                      if (itemID == item.item.id) {
+                        setLikeOrDis("Like");
+                      }
+                    })
+                  })
+                  user_disliked_list.once('value').then(function (s) {
+                    s.forEach(function (c) {
+                      let itemID = c.val().itemID;
+                      if (itemID == item.item.id) {
+                        setLikeOrDis("Dislike");
+                      }
+                    })
+                  })
+                  let user_history_list = firebase.database().ref('user_list/' + childSnapshot.key + "/history_list");
+                  user_history_list.once('value').then(function (s) {
+                    s.forEach(function (c) {
+                      let itemID = c.val().itemID;
+                      if (itemID == item.item.id) {
+                        firebase.database().ref('user_list/' + childSnapshot.key + "/history_list/" + c.key).remove();
+                      }
+                    })
+                  }).then(function () {
+                    user_history_list.push({
+                      itemID: item.item.id
+                    })
+                  })
+                }
+              })
+            })
+          }
+          showModal(item)
+        }
+        }
         style={{
           width: Dimensions.get('screen').width * 0.95,
           display: 'flex',
@@ -79,7 +280,7 @@ export default function Favourites({ navigation }: { navigation: any }) {
           borderColor: '#DE75BE'
         }}>
           <Image
-            source={{ uri: item.item.imageURL }}
+            source={{ uri: item.item.photourl }}
             style={{ width: '100%', height: '100%', resizeMode: 'contain' }}
           />
         </View>
@@ -108,99 +309,12 @@ export default function Favourites({ navigation }: { navigation: any }) {
 
   }
 
-  const ListHeader = () => {
-    return (
-      <View style={styles.flatlistHeaderContainer}>
-        <View style={{ backgroundColor: 'white', width: '90%', height: 350, borderRadius: 20 }}>
-          <Image source={{ uri: DATA[0].imageURL }} style={{ width: '100%', height: '100%', resizeMode: 'contain' }} />
-        </View>
-        <View style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-          <Text style={{ fontSize: 40, color: 'white', fontWeight: '700', marginTop: 15 }}>
-            {currItem}
-          </Text>
-        </View>
-        <TouchableOpacity onPress={removeFromFavourites} style={{ marginTop: 15, width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-          <View style={{ width: '80%', height: 50, backgroundColor: '#7CAEDE', borderRadius: 20, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-            <Text style={{ color: 'white', fontSize: 20, fontWeight: '600' }}>添加至我的最愛</Text>
-          </View>
-          <Image source={require('../assets/star_outline.png')} style={{ position: 'absolute', right: 80, width: 30, height: 30, resizeMode: 'contain' }} />
-        </TouchableOpacity>
-        <View style={{ width: '100%', height: 50, display: 'flex', justifyContent: 'flex-end', alignItems: 'center', }}>
-          <Text style={{ color: 'white', fontSize: 20, fontWeight: '600' }}>
-            留言
-          </Text>
-        </View>
-      </View>
-    )
-  }
 
   const mainHeader = () => {
     return (
       <Text style={{ fontSize: 30, color: 'white', fontWeight: '800', width: '50%' }}>
-        我的最愛
+        瀏覽紀錄
       </Text>
-    )
-  }
-
-  const CommentContainer = (item: any) => {
-    return (
-      <View style={styles.commentContainer}>
-        <View style={{ height: 90, display: 'flex', justifyContent: 'flex-start', alignItems: 'flex-start' }}>
-          <View style={{ height: 50, width: 50, marginLeft: 10 }}>
-            <Image
-              style={{ width: 50, height: 50, resizeMode: 'contain', flex: 1 }}
-              source={require('../assets/account_default.png')}
-            />
-          </View>
-
-        </View>
-        <View style={{ display: 'flex', flexGrow: 6, flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-          <View style={{ minHeight: 80, width: '90%', backgroundColor: '#00C7DC', borderRadius: 10, alignItems: 'center', justifyContent: 'space-between' }}>
-            <View style={{ height: 30, width: '90%', marginTop: 10 }}>
-              <Text style={{ fontSize: 18, color: 'white', fontWeight: '500' }}>
-                {item.item.userID} 說：
-              </Text>
-            </View>
-            <View style={{ width: '90%' }}>
-              <Text style={{ fontSize: 18, color: 'white', fontWeight: '500' }}>{item.item.content}</Text>
-            </View>
-            <View style={{ height: 30, width: '100%', justifyContent: 'flex-end', marginBottom: 5 }}>
-              <View style={{ display: 'flex', flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'flex-end' }}>
-                <View style={{ flex: 2 }}>
-
-                </View>
-                <TouchableOpacity
-                  onPress={() => { }}
-                  style={styles.likes}>
-                  <View style={{ marginRight: 5, width: 20, height: 20 }}>
-                    <Image
-                      source={require('../assets/like.png')}
-                      style={{ width: 20, height: 20, resizeMode: 'contain' }}
-                    />
-                  </View>
-                  <Text style={styles.likeTXT}>
-                    {item.item.likes}
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  onPress={() => { }}
-                  style={styles.likes}>
-                  <View style={{ marginRight: 5, width: 20, height: 20 }}>
-                    <Image
-                      source={require('../assets/dislike.png')}
-                      style={{ width: 20, height: 20, resizeMode: 'contain' }}
-                    />
-                  </View>
-
-                  <Text style={styles.likeTXT}>
-                    {item.item.dislikes}
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </View>
-        </View>
-      </View>
     )
   }
 
@@ -247,18 +361,16 @@ export default function Favourites({ navigation }: { navigation: any }) {
 
         <View style={styles.commentList}>
           <FlatList
-            style={{
-              width: '100%',
-            }}
-            data={DATA}
+            data={hotMainItems}
             keyExtractor={item => item.id.toString()}
             ListHeaderComponent={mainHeader}
             ListHeaderComponentStyle={{ width: '90%', height: 60, alignItems: 'flex-start', justifyContent: 'center' }}
             renderItem={renderItem}
             horizontal={false}
+            onRefresh={onItemRefresh}
+            refreshing={itemRefreshing}
             contentContainerStyle={{
               display: 'flex',
-              width: '100%',
               justifyContent: 'center',
               alignItems: 'center',
               paddingBottom: 120,
@@ -266,55 +378,23 @@ export default function Favourites({ navigation }: { navigation: any }) {
           />
         </View>
 
-        <Portal>
-          <Modal style={{ marginTop: 0, marginBottom: 0 }} visible={visible} onDismiss={hideModal}>
-            <KeyboardAvoidingView
-              behavior={(Platform.OS === 'ios') ? "padding" : undefined} style={{ backgroundColor: '#DE75BE' }}>
-              <View style={{ height: '100%', width: '100%', backgroundColor: '#DE75BE', alignItems: 'center', justifyContent: 'flex-start' }}>
-                <View style={[styles.topContainer,]}>
-                  <TouchableOpacity style={styles.backButton} onPress={hideModal}>
-                    <Image
-                      style={[styles.backButton, { resizeMode: 'contain' }]}
-                      source={require('../assets/backarrow.png')} />
-                  </TouchableOpacity>
-                </View>
-                <View style={styles.flatList}>
-                  <FlatList
-                    data={COMMENTS}
-                    keyExtractor={item => item.id.toString()}
-                    renderItem={CommentContainer}
-                    ListHeaderComponent={ListHeader}
-                    horizontal={false}
-                    contentContainerStyle={{
-                      paddingBottom: 200
-                    }}
-                  />
-                </View>
-                <View style={{ position: 'absolute', bottom: 0, height: 100, width: '100%', backgroundColor: '#7CAEDE', display: 'flex', flexDirection: 'row' }}>
-                  <View style={{ width: '80%', height: 40, backgroundColor: 'white', borderRadius: 10, display: 'flex', justifyContent: 'center', margin: 10, marginTop: 20 }}>
-                    <TextInput
-                      value={myComment}
-                      onChangeText={setMyComment}
-                      style={{ marginLeft: 10, width: '95%', height: '90%', fontSize: 20, fontWeight: '500' }}
-                      placeholder="我想說⋯⋯"
-                    />
-                  </View>
-                  <TouchableOpacity
-                    onPress={() => { }}
-                    style={{ width: 40, height: 40, marginTop: 20 }}>
-                    <Image
-                      style={{ width: 40, height: 40, resizeMode: 'contain' }}
-                      source={require('../assets/send.png')} />
-
-                  </TouchableOpacity>
-                </View>
-              </View>
-            </KeyboardAvoidingView>
-          </Modal>
-        </Portal>
       </View>
     </Provider>
   )
+}
+const StackFav = createStackNavigator();
+
+export default function Favourites({ navigation }: { navigation: any }) {
+  return (
+    <Provider>
+      <StackFav.Navigator
+        screenOptions={{ headerShown: false, gestureEnabled: false }}>
+        <StackFav.Screen name="Favourites" component={FavPage} />
+        <StackFav.Screen name="Item" component={ItemView} />
+      </StackFav.Navigator>
+    </Provider>
+
+  );
 }
 
 
@@ -327,8 +407,17 @@ const styles = StyleSheet.create({
     height: 260,
     backgroundColor: '#DE75BE',
     alignItems: 'center',
-    marginTop: 10,
+    marginTop: 15,
     borderRadius: 8,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.23,
+    shadowRadius: 2.62,
+
+    elevation: 4,
   },
   itemTouch: {
     width: '90%',
@@ -427,7 +516,6 @@ const styles = StyleSheet.create({
     height: '100%'
   },
   flatlistHeaderContainer: {
-    height: 550,
     width: '100%',
     //backgroundColor: 'blue',
     alignItems: 'center',
@@ -443,6 +531,50 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     marginTop: 10,
     flexDirection: 'row',
+  },
+  container: {
+    height: '100%',
+    width: '100%',
+    backgroundColor: '#B184CF',
+    display: 'flex',
+    alignContent: 'center',
+    alignItems: 'center'
+    //justifyContent: 'center'
+  },
+
+  midContainer: {
+    width: '80%',
+    height: '50%',
+    display: 'flex',
+    //backgroundColor: 'red',
+    flexDirection: 'column',
+  },
+
+  loginTXT: {
+    width: '100%',
+    height: 50
+  },
+
+
+  midCol: {
+    marginTop: 25
+  },
+  socialMediaButton: {
+    width: '40%',
+    height: 60,
+    backgroundColor: 'white',
+    borderRadius: 20
+  },
+  visibility: {
+    height: 30,
+    width: 30,
+    resizeMode: 'contain',
+    position: 'absolute',
+    right: 15
   }
 
+
 })
+
+
+

@@ -36,6 +36,7 @@ export default function HomeScreen({ navigation }: { navigation: any }) {
 
   useEffect(() => {
     let firebaseUser = firebase.auth().currentUser;
+    console.log(firebaseUser)
     if (firebaseUser) {
       navigation.push('Main')
     }

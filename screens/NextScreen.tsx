@@ -294,7 +294,7 @@ function HotMain({ navigation }: { navigation: any }) {
                 style={{ marginRight: 5, width: 20, height: 20, resizeMode: 'contain' }}
               />
               <Text style={styles.likeTXT}>
-                {item.item.comments ? item.item.comments : 0}
+                {item.item.commentNum ? item.item.commentNum : 0}
               </Text>
             </View>
 
